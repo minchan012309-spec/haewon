@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>교무실 호출 시스템</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: 'Pretendard', sans-serif;
+        background: #0f172a;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    #startLayer {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: #0f172a;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10;
+    }
+
+    button {
+        padding: 20px 40px;
+        font-size: 20px;
+        border: none;
+        border-radius: 15px;
+        background: #2563eb;
+        color: white;
+        cursor: pointer;
+    }
+
+    #clock {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        font-size: 24px;
+        opacity: 0.8;
+    }
+
+    #card {
+        width: 80%;
+        max-width: 600px;
+        background: #1e293b;
+        padding: 40px;
+        border-radius: 20px;
+        text-align: center;
+        transform: scale(0.8);
+        opacity: 0;
+        transition: 0.3s;
+    }
+
+    #card.active {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    #tName {
+        font-size: 28px;
+        margin-bottom: 10px;
+    }
+
+    #sInfo {
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+
+    #sPurp {
+        font-size: 20px;
+        color: #94a3b8;
+    }
+
+    #empty {
+        font-size: 20px;
+        opacity: 0.5;
+    }
+</style>
+</head>
+
+<body>
+
+<div id="startLayer">
+    <button onclick="initSystem()">시스템 시작</button>
+</div>
+
+<div id="clock"></div>
+
+<div id="empty">호출 대기 중...</div>
+
+<div id="card">
+    <div id="tName"></div>
+    <div id="sInfo"></div>
+    <div id="sPurp"></div>
+</div>
+
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyAX-64IIAjJmLS-GOf-dQ2X_qdsLasSqI1lnFeHJFaGZsohBN4a-U2RToE_nZ8mKdU/exec";
+
+let lastTime = new Date().getTime();
+let voice = null;
+
+// ⏰ 시계
+function updateClock() {
+    document.getElementById('clock').innerText =
+        new Date().toLocaleTimeString();
+}
+setInterval(updateClock, 1000);
+
+// 🎤 음성 로드
+function loadVoices() {
+    const voices = speechSynthesis.getVoices();
+    voice = voices.find(v => v.lang === 'ko-KR') 
+         || voices.find(v => v.lang.includes('ko'));
+}
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+// 🚀 시스템 시작 (핵심)
+function initSystem() {
+    document.getElementById('startLayer').style.display = 'none';
+
+    // 🔥 오디오 잠금 해제 (핵심)
+    const unlockAudio = new Audio();
+    unlockAudio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=";
+    unlockAudio.play().catch(() => {});
+
+    loadVoices();
+
+    // 테스트 음성
+    const test = new SpeechSynthesisUtterance("시스템이 정상적으로 시작되었습니다.");
+    if (voice) test.voice = voice;
+    test.lang = "ko-KR";
+    speechSynthesis.speak(test);
+
+    setInterval(checkCall, 3000);
+}
+
+// 📡 호출 체크
+async function checkCall() {
+    try {
+        const res = await fetch(GAS_URL + "?type=latest");
+        const d = await res.json();
+
+        if (d.id && Number(d.timestamp) > lastTime) {
+            lastTime = Number(d.timestamp);
+            notify(d);
+        }
+    } catch (e) {
+        console.log("에러:", e);
+    }
+}
+
+// 🔔 알림
+function notify(d) {
+
+    if (!voice) loadVoices();
+
+    document.getElementById('empty').style.display = 'none';
+
+    document.getElementById('tName').innerText =
+        d.teacher + " 선생님";
+
+    document.getElementById('sInfo').innerText =
+        d.id + " " + d.name;
+
+    document.getElementById('sPurp').innerText =
+        d.purpose;
+
+    const card = document.getElementById('card');
+    card.classList.add('active');
+
+    // 🔊 알림음
+    const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+
+    audio.play().then(() => {
+
+        setTimeout(() => {
+
+            // 🔥 TTS 초기화
+            speechSynthesis.cancel();
+
+            const txt =
+                `${d.teacher} 선생님, ${d.id} ${d.name} 학생이 ${d.purpose} 건으로 호출했습니다.`;
+
+            const uttr = new SpeechSynthesisUtterance(txt);
+
+            if (voice) uttr.voice = voice;
+            uttr.lang = "ko-KR";
+            uttr.rate = 1.0;
+
+            speechSynthesis.speak(uttr);
+
+        }, 500);
+
+    }).catch(() => {
+        console.log("오디오 차단됨");
+    });
+
+    // ⏳ 15초 후 초기화
+    setTimeout(() => {
+        card.classList.remove('active');
+        document.getElementById('empty').style.display = 'block';
+    }, 15000);
+}
+</script>
+
+</body>
+</html>
