@@ -1,0 +1,78 @@
+<script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyAX-64IIAjJmLS-GOf-dQ2X_qdsLasSqI1lnFeHJFaGZsohBN4a-U2RToE_nZ8mKdU/exec";
+    let lastTime = new Date().getTime();
+    let voice = null;
+
+    // 시계 업데이트
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('clock').innerText = now.toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000);
+
+    // 한국어 목소리 찾기 (더 강력한 로직)
+    function loadVoices() {
+        const voices = window.speechSynthesis.getVoices();
+        // 한국어 목소리 우선 순위: 구글 한국어 -> 시스템 한국어
+        voice = voices.find(v => v.lang === 'ko-KR' || v.lang === 'ko_KR') || voices.find(v => v.lang.includes('ko'));
+    }
+    
+    // 브라우저마다 목소리 로드 시점이 다르므로 둘 다 설정
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices();
+
+    function initSystem() {
+        document.getElementById('startLayer').style.display = 'none';
+        loadVoices(); // 버튼 누를 때 다시 한 번 확인
+        
+        // 테스트용 소리 (버튼 누르자마자 소리 나는지 확인용)
+        const testUttr = new SpeechSynthesisUtterance("시스템 수신을 시작합니다.");
+        if(voice) testUttr.voice = voice;
+        window.speechSynthesis.speak(testUttr);
+
+        setInterval(checkCall, 3000);
+    }
+
+    async function checkCall() {
+        try {
+            const res = await fetch(GAS_URL + "?type=latest");
+            const d = await res.json();
+            
+            // timestamp가 숫자인지 확인하고 비교
+            if(d.id && Number(d.timestamp) > lastTime) {
+                lastTime = Number(d.timestamp);
+                notify(d);
+            }
+        } catch(e) {
+            console.error("데이터 확인 중 에러:", e);
+        }
+    }
+
+    function notify(d) {
+        document.getElementById('empty').style.display = 'none';
+        document.getElementById('tName').innerText = `${d.teacher} 선생님`;
+        document.getElementById('sInfo').innerText = `${d.id} ${d.name}`;
+        document.getElementById('sPurp').innerText = d.purpose;
+        
+        const card = document.getElementById('card');
+        card.classList.add('active');
+
+        // 알림음 (안정적인 HTTPS 주소로 교체)
+        const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+        audio.play().then(() => {
+            setTimeout(() => {
+                const txt = `${d.teacher} 선생님, ${d.id} ${d.name} 학생이 ${d.purpose} 건으로 호출했습니다.`;
+                const uttr = new SpeechSynthesisUtterance(txt);
+                if(voice) uttr.voice = voice;
+                uttr.lang = 'ko-KR';
+                uttr.rate = 1.0;
+                window.speechSynthesis.speak(uttr);
+            }, 500);
+        }).catch(err => console.error("오디오 재생 실패:", err));
+
+        setTimeout(() => {
+            card.classList.remove('active');
+            document.getElementById('empty').style.display = 'block';
+        }, 15000);
+    }
+</script>
