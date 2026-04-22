@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>교무실 호출 시스템 - 학생용</title>
+    <style>
+        @font-face {
+            font-family: 'Paperlogy';
+            src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-Regular.woff2') format('woff2');
+        }
+        * { font-family: 'Paperlogy', sans-serif; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; padding: 20px; background-color: #f1f5f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { background: white; padding: 30px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 100%; max-width: 600px; min-height: 600px; display: flex; flex-direction: column; }
+        
+        .page { display: none; flex-direction: column; height: 100%; flex: 1; }
+        .page.active { display: flex; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        h1 { font-size: 1.8rem; color: #1e293b; margin-bottom: 10px; }
+        .subtitle { color: #64748b; margin-bottom: 25px; }
+
+        /* 선택 그리드 개선 */
+        .grid { display: grid; gap: 8px; margin-bottom: 20px; }
+        .btn-opt { background: #f8fafc; border: 2px solid #e2e8f0; padding: 15px 5px; border-radius: 12px; cursor: pointer; text-align: center; font-weight: 600; color: #475569; transition: 0.2s; }
+        .btn-opt.selected { background: #eff6ff; border-color: #2563eb; color: #2563eb; transform: scale(0.98); }
+
+        /* 입력창 */
+        input { width: 100%; padding: 16px; border: 2px solid #e2e8f0; border-radius: 15px; font-size: 1.1rem; margin-bottom: 15px; outline: none; }
+        input:focus { border-color: #2563eb; }
+
+        /* 하단 버튼 */
+        .btn-next { background: #2563eb; color: white; border: none; padding: 20px; border-radius: 20px; font-size: 1.3rem; font-weight: bold; cursor: pointer; margin-top: auto; }
+        .btn-next:disabled { background: #cbd5e0; cursor: not-allowed; }
+
+        /* 홀딩 오버레이 */
+        #holdingOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .spinner { width: 60px; height: 60px; border: 6px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="page1" class="page active">
+        <h1>선생님 호출</h1>
+        <p class="subtitle">담당 선생님을 선택하세요.</p>
+        <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="btn-opt" onclick="sel('t','김국어')">김국어</div>
+            <div class="btn-opt" onclick="sel('t','이수학')">이수학</div>
+            <div class="btn-opt" onclick="sel('t','박영어')">박영어</div>
+            <div class="btn-opt" onclick="sel('t','최과학')">최과학</div>
+            <div class="btn-opt" onclick="sel('t','정정보')">정정보</div>
+        </div>
+        <button class="btn-next" id="n1" disabled onclick="go(2)">다음 단계</button>
+    </div>
+
+    <div id="page2" class="page">
+        <h1>정보 입력</h1>
+        <div class="grid" id="classGrid" style="grid-template-columns: repeat(5, 1fr);"></div>
+        <div class="grid" id="numGrid" style="grid-template-columns: repeat(6, 1fr); max-height: 180px; overflow-y: auto; padding-right: 5px;"></div>
+        <input type="text" id="nameInp" placeholder="성함 입력" oninput="val2()">
+        <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="btn-opt" onclick="sel('p','질문')">질문</div>
+            <div class="btn-opt" onclick="sel('p','제출')">제출</div>
+            <div class="btn-opt" onclick="sel('p','상담')">상담</div>
+        </div>
+        <button class="btn-next" id="n2" disabled onclick="submit()">호출 전송</button>
+    </div>
+
+    <div id="page3" class="page" style="text-align:center; justify-content:center;">
+        <h1 style="font-size: 3rem;">✅</h1>
+        <h1>전송 완료</h1>
+        <p class="subtitle">선생님이 확인하실 때까지<br>밖에서 대기해주세요.</p>
+        <button class="btn-next" onclick="location.reload()" style="background:#64748b;">처음으로</button>
+    </div>
+</div>
+
+<div id="holdingOverlay">
+    <div class="spinner"></div>
+    <h1 id="holdMsg">호출을 전송 중입니다...</h1>
+    <p class="subtitle">잠시만 패드 앞에서 기다려주세요 (3s)</p>
+</div>
+
+<script>
+    let data = { t:'', b:'', n:'', name:'', p:'' };
+    const GAS_URL = "YOUR_GAS_URL_HERE"; 
+
+    function go(p) {
+        document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+        document.getElementById('page'+p).classList.add('active');
+    }
+
+    // 그리드 생성
+    const cg = document.getElementById('classGrid');
+    for(let i=1; i<=10; i++) cg.innerHTML += `<div class="btn-opt" onclick="sel('b','${i}')">${i}반</div>`;
+    const ng = document.getElementById('numGrid');
+    for(let i=1; i<=35; i++) ng.innerHTML += `<div class="btn-opt" onclick="sel('n','${i}')">${i}번</div>`;
+
+    function sel(k, v) {
+        event.target.parentElement.querySelectorAll('.btn-opt').forEach(b => b.classList.remove('selected'));
+        event.target.classList.add('selected');
+        data[k] = v;
+        if(k==='t') document.getElementById('n1').disabled = false;
+        val2();
+    }
+
+    function val2() {
+        data.name = document.getElementById('nameInp').value;
+        const ok = data.b && data.n && data.name && data.p;
+        document.getElementById('n2').disabled = !ok;
+    }
+
+    function submit() {
+        const studentId = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
+        
+        // 1. 재호출 방지 체크 (로컬 스토리지 활용)
+        const lastCall = localStorage.getItem('lastCallTime_' + studentId);
+        const now = new Date().getTime();
+        if (lastCall && now - lastCall < 600000) { // 10분 = 600,000ms
+            const left = Math.ceil((600000 - (now - lastCall)) / 60000);
+            alert(`재호출 불가: 동일 학번으로는 ${left}분 후에 다시 호출할 수 있습니다.`);
+            return;
+        }
+
+        // 2. 실제 전송 (누르자마자 즉시 서버로 쏨)
+        fetch(GAS_URL, {
+            method: "POST",
+            mode: 'no-cors',
+            body: JSON.stringify({ teacher: data.t, id: studentId, name: data.name, purpose: data.p })
+        });
+
+        // 3. 심리적 홀딩 (사실은 이미 전송됨)
+        localStorage.setItem('lastCallTime_' + studentId, now);
+        const overlay = document.getElementById('holdingOverlay');
+        const holdMsg = document.getElementById('holdMsg');
+        overlay.style.display = 'flex';
+        
+        let count = 3;
+        const timer = setInterval(() => {
+            count--;
+            if(count > 0) {
+                holdMsg.innerText = `호출을 전송 중입니다... (${count}s)`;
+            } else {
+                clearInterval(timer);
+                overlay.style.display = 'none';
+                go(3);
+            }
+        }, 1000);
+    }
+</script>
+</body>
+</html>
