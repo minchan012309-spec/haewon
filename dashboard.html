@@ -3,90 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>교무실 호출 수신 대시보드</title>
+    <title>호출 대시보드 - 선생님용</title>
     <style>
-        @font-face {
-            font-family: 'Paperlogy';
-            src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-Regular.woff2') format('woff2');
-            font-weight: 400;
-        }
-        * { font-family: 'Paperlogy', sans-serif; margin:0; padding:0; box-sizing:border-box; }
-        body { background: #f0f4f8; color: #2d3748; height: 100vh; display: flex; flex-direction: column; padding: 30px; }
-        
-        #startLayer { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .start-btn { background: #3182ce; color: white; padding: 25px 50px; border-radius: 20px; font-size: 1.8rem; cursor: pointer; border:none; box-shadow: 0 10px 20px rgba(49,130,206,0.3); }
-        
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .status-dot { width: 12px; height: 12px; background: #48bb78; border-radius: 50%; display: inline-block; margin-right: 8px; }
-
-        /* 메인 호출 카드 */
-        .alert-card { background: white; border-radius: 32px; padding: 60px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.1); border: 4px solid transparent; transition: 0.5s; display: none; margin: auto; width: 100%; max-width: 900px; }
-        .alert-card.active { display: block; border-color: #3182ce; animation: shake 0.5s ease-in-out; }
-        @keyframes shake { 0%, 100% { transform: translateY(0); } 25% { transform: translateY(-10px); } 75% { transform: translateY(-5px); } }
-        
-        .t-label { color: #3182ce; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; }
-        .t-name { font-size: 5rem; color: #1a202c; margin-bottom: 30px; }
-        .info-box { background: #f8fafc; border-radius: 20px; padding: 40px; margin-top: 20px; }
-        .msg { font-size: 3rem; line-height: 1.4; color: #4a5568; }
-        .highlight { color: #3182ce; font-weight: bold; }
-
-        .empty-state { font-size: 2rem; color: #a0aec0; text-align: center; margin-top: 150px; }
+        @font-face { font-family: 'Paperlogy'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-Regular.woff2') format('woff2'); }
+        * { font-family: 'Paperlogy', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f8fafc; padding: 40px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        #startLayer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .start-btn { background: #2563eb; color: white; padding: 25px 60px; border-radius: 20px; font-size: 2rem; border: none; cursor: pointer; font-weight: bold; }
+        .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
+        .alert-card { background: white; border-radius: 40px; padding: 60px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.1); display: none; flex: 1; margin-bottom: 20px; animation: slideUp 0.5s ease; }
+        .alert-card.active { display: block; }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .t-name { font-size: 5rem; font-weight: 900; color: #0f172a; margin: 20px 0; }
+        .info-box { background: #f1f5f9; padding: 40px; border-radius: 30px; font-size: 3rem; }
+        .history-item { background: white; padding: 15px; border-radius: 15px; margin-top: 10px; display: flex; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
-
 <div id="startLayer">
-    <h1 style="margin-bottom:30px; color:#1a202c;">교무실 수신 시스템</h1>
     <button class="start-btn" onclick="initSystem()">수신 시작하기</button>
-    <p style="margin-top:20px; color:#718096;">소리 알림을 위해 버튼을 눌러주세요.</p>
 </div>
-
 <div class="header">
-    <h2 style="font-size:1.5rem; color:#3182ce;"><span class="status-dot"></span>실시간 호출 모니터링 중</h2>
-    <div id="clock" style="font-size:1.2rem; color:#718096;"></div>
+    <div style="color:#2563eb; font-weight:bold; font-size:1.5rem;">● 실시간 모니터링 중</div>
+    <div id="clock" style="font-size:1.5rem;">00:00:00</div>
 </div>
-
-<div class="empty-state" id="empty">현재 대기 중인 호출이 없습니다.</div>
-
+<div id="empty" style="flex:1; display:flex; justify-content:center; align-items:center; font-size:2rem; color:#cbd5e0;">대기 중...</div>
 <div class="alert-card" id="card">
-    <div class="t-label">호출된 선생님</div>
-    <div class="t-name" id="tName">홍길동 선생님</div>
-    <div class="info-box">
-        <div class="msg">
-            <span class="highlight" id="sInfo">20101 김민찬</span> 학생<br>
-            목적: <span class="highlight" id="sPurp">수행평가 질문</span>
-        </div>
-    </div>
+    <div style="color:#2563eb; font-size:1.5rem; font-weight:bold;">지금 호출한 선생님</div>
+    <div class="t-name" id="tName">---</div>
+    <div class="info-box"><span id="sInfo">학번 성함</span><br><span id="sPurp" style="color:#2563eb;">목적</span></div>
 </div>
+<div id="historyList" style="margin-top:20px;"></div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyAX-64IIAjJmLS-GOf-dQ2X_qdsLasSqI1lnFeHJFaGZsohBN4a-U2RToE_nZ8mKdU/exec";
-    let lastTime = new Date().getTime();
-    let voice = null;
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz9pc1iLJRsQLv9AU4PK9ozseuwQLPFwV0fILVJyicXaLzqQbV-UuqPRAX_fpcSBgl4/exec";
+    let lastTime = Date.now(), selectedVoice = null, history = [];
 
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('clock').innerText = now.toLocaleTimeString();
-    }
+    function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }
     setInterval(updateClock, 1000);
 
-    function loadVoices() {
-        voice = window.speechSynthesis.getVoices().find(v => v.lang.includes('ko'));
+    function loadVoice() { 
+        selectedVoice = window.speechSynthesis.getVoices().find(v => v.lang.includes('ko') && v.name.includes('Google')) || window.speechSynthesis.getVoices().find(v => v.lang.includes('ko'));
     }
-    window.speechSynthesis.onvoiceschanged = loadVoices;
+    window.speechSynthesis.onvoiceschanged = loadVoice;
 
     function initSystem() {
         document.getElementById('startLayer').style.display = 'none';
-        loadVoices();
-        setInterval(checkCall, 3000);
+        loadVoice();
+        new Audio('https://t1.daumcdn.net/kakaopay/tesla/20230728/sfx/ding.mp3').play();
+        setInterval(checkCall, 1000); 
     }
 
     async function checkCall() {
         try {
-            const res = await fetch(GAS_URL + "?type=latest");
+            const res = await fetch(GAS_URL + "?type=latest&v=" + Date.now());
             const d = await res.json();
-            if(d.id && d.timestamp > lastTime) {
-                lastTime = d.timestamp;
+            if(d.timestamp && Number(d.timestamp) > lastTime) {
+                lastTime = Number(d.timestamp);
                 notify(d);
             }
         } catch(e) {}
@@ -94,31 +67,22 @@
 
     function notify(d) {
         document.getElementById('empty').style.display = 'none';
-        document.getElementById('tName').innerText = `${d.teacher} 선생님`;
-        document.getElementById('sInfo').innerText = `${d.id} ${d.name}`;
-        document.getElementById('sPurp').innerText = d.purpose;
-        
         const card = document.getElementById('card');
+        document.getElementById('tName').innerText = d.teacher + " 선생님";
+        document.getElementById('sInfo').innerText = d.id + " " + d.name;
+        document.getElementById('sPurp').innerText = d.purpose;
         card.classList.add('active');
 
-        // 알림음
-        const audio = new Audio('https://t1.daumcdn.net/kakaopay/tesla/20230728/sfx/ding.mp3');
-        audio.play().then(() => {
-            setTimeout(() => {
-                const txt = `${d.teacher} 선생님, ${d.id} ${d.name} 학생의 ${d.purpose} 호출입니다.`;
-                const uttr = new SpeechSynthesisUtterance(txt);
-                uttr.voice = voice;
-                uttr.lang = 'ko-KR';
-                uttr.rate = 1.0;
-                window.speechSynthesis.speak(uttr);
-            }, 800);
-        });
-
-        // 20초 후 다시 대기 상태로
+        new Audio('https://t1.daumcdn.net/kakaopay/tesla/20230728/sfx/ding.mp3').play();
         setTimeout(() => {
-            card.classList.remove('active');
-            document.getElementById('empty').style.display = 'block';
-        }, 20000);
+            const uttr = new SpeechSynthesisUtterance(`${d.teacher} 선생님, ${d.name} 학생이 ${d.purpose}로 호출했습니다.`);
+            uttr.voice = selectedVoice; uttr.lang = 'ko-KR'; window.speechSynthesis.speak(uttr);
+        }, 800);
+
+        history.unshift(d); if(history.length > 3) history.pop();
+        document.getElementById('historyList').innerHTML = history.map(h => `<div class="history-item"><span>${h.id} ${h.name}</span><span>${h.purpose}</span></div>`).join('');
+
+        setTimeout(() => { card.classList.remove('active'); document.getElementById('empty').style.display = 'flex'; }, 15000);
     }
 </script>
 </body>
