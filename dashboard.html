@@ -43,18 +43,13 @@
     setInterval(updateClock, 1000);
 
     function loadVoice() { 
-        const voices = window.speechSynthesis.getVoices();
-        selectedVoice = voices.find(v => v.lang.includes('ko') && v.name.includes('Google')) || voices.find(v => v.lang.includes('ko'));
+        selectedVoice = window.speechSynthesis.getVoices().find(v => v.lang.includes('ko') && v.name.includes('Google')) || window.speechSynthesis.getVoices().find(v => v.lang.includes('ko'));
     }
     window.speechSynthesis.onvoiceschanged = loadVoice;
 
     function initSystem() {
         document.getElementById('startLayer').style.display = 'none';
-        
-        // 브라우저 TTS 잠금 해제용 빈 대사
-        window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
         loadVoice();
-        
         new Audio('https://t1.daumcdn.net/kakaopay/tesla/20230728/sfx/ding.mp3').play();
         setInterval(checkCall, 1000); 
     }
@@ -78,21 +73,16 @@
         document.getElementById('sPurp').innerText = d.purpose;
         card.classList.add('active');
 
-        const audio = new Audio('https://t1.daumcdn.net/kakaopay/tesla/20230728/sfx/ding.mp3');
-        audio.play().then(() => {
-            setTimeout(() => {
-                const text = `${d.teacher} 선생님, ${d.name} 학생이 ${d.purpose}로 왔습니다.`;
-                const uttr = new SpeechSynthesisUtterance(text);
-                if (selectedVoice) uttr.voice = selectedVoice;
-                uttr.lang = 'ko-KR';
-                window.speechSynthesis.speak(uttr);
-            }, 800);
-        });
+        new Audio('https://t1.daumcdn.net/kakaopay/tesla/20230728/sfx/ding.mp3').play();
+        setTimeout(() => {
+            const uttr = new SpeechSynthesisUtterance(`${d.teacher} 선생님, ${d.name} 학생이 ${d.purpose}로 호출했습니다.`);
+            uttr.voice = selectedVoice; uttr.lang = 'ko-KR'; window.speechSynthesis.speak(uttr);
+        }, 800);
 
         history.unshift(d); if(history.length > 3) history.pop();
         document.getElementById('historyList').innerHTML = history.map(h => `<div class="history-item"><span>${h.id} ${h.name}</span><span>${h.purpose}</span></div>`).join('');
 
-        setTimeout(() => { card.classList.remove('active'); document.getElementById('empty').style.display = 'flex'; }, 10000);
+        setTimeout(() => { card.classList.remove('active'); document.getElementById('empty').style.display = 'flex'; }, 15000);
     }
 </script>
 </body>
