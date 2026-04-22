@@ -1,19 +1,4 @@
-<script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbz9pc1iLJRsQLv9AU4PK9ozseuwQLPFwV0fILVJyicXaLzqQbV-UuqPRAX_fpcSBgl4/exec"; 
-    let data = { t:'', b:'', n:'', name:'', p:'' };
-    let isSent = false; // 중복 전송 방지
-
-    function go(p) { document.querySelectorAll('.page').forEach(el => el.classList.remove('active')); document.getElementById('page'+p).classList.add('active'); }
-    
-    // 데이터 생성 및 선택 로직 (동일)
-    // ... (중략) ...
-
-    let pressTimer, progress = 0;
-    const holdBtn = document.getElementById('longPressBtn'), bar = document.getElementById('progressBar');
-
-    function startPress() {
-        if(holdBtn.classList.contains('disabled')) return;
-        const sid = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -138,43 +123,3 @@
 </script>
 </body>
 </html>
-        if (localStorage.getItem('lc_'+sid) && new Date().getTime() - localStorage.getItem('lc_'+sid) < 600000) return alert("10분 뒤 재호출 가능");
-        
-        // [핵심 수정] 누르기 시작하자마자 전송 실행 (선생님 화면 반응 속도 최적화)
-        if(!isSent) {
-            executeSubmit(sid);
-            isSent = true;
-        }
-
-        holdBtn.classList.add('active-press');
-        pressTimer = setInterval(() => {
-            progress += 2; bar.style.width = progress + "%";
-            if(progress >= 100) { 
-                clearInterval(pressTimer); 
-                go(3); // 3초 다 채우면 완료 페이지로 이동
-            }
-        }, 60);
-    }
-
-    function endPress() { 
-        clearInterval(pressTimer); 
-        holdBtn.classList.remove('active-press'); 
-        if(progress < 100) { 
-            progress = 0; 
-            bar.style.width = "0%"; 
-            // 3초 안 채우고 떼면 다시 누를 수 있게 초기화 (데이터는 이미 갔음)
-            isSent = false; 
-        } 
-    }
-
-    holdBtn.addEventListener('mousedown', startPress);
-    holdBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startPress(); });
-    window.addEventListener('mouseup', endPress); 
-    window.addEventListener('touchend', endPress);
-
-    function executeSubmit(id) {
-        // 비동기로 즉시 전송
-        fetch(GAS_URL, { method: "POST", mode: 'no-cors', body: JSON.stringify({ teacher: data.t, id: id, name: data.name, purpose: data.p }) });
-        localStorage.setItem('lc_'+id, new Date().getTime());
-    }
-</script>
