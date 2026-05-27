@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>교무실 호출 - 학생용</title>
+    <style>
+        @font-face { font-family: 'Paperlogy'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-Regular.woff2') format('woff2'); }
+        * { font-family: 'Paperlogy', sans-serif; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        body { margin: 0; padding: 20px; background-color: #f1f5f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { background: white; padding: 30px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 100%; max-width: 600px; min-height: 700px; display: flex; flex-direction: column; position: relative; }
+        .page { display: none; flex-direction: column; height: 100%; flex: 1; }
+        .page.active { display: flex; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        h1 { font-size: 1.8rem; color: #1e293b; margin-bottom: 10px; }
+        .subtitle { color: #64748b; margin-bottom: 25px; line-height: 1.5; font-size: 0.95rem; }
+        .grid { display: grid; gap: 8px; margin-bottom: 20px; }
+        .btn-opt { background: #f8fafc; border: 2px solid #e2e8f0; padding: 15px 5px; border-radius: 12px; cursor: pointer; text-align: center; font-weight: 600; color: #475569; transition: 0.2s; }
+        .btn-opt.selected { background: #eff6ff; border-color: #2563eb; color: #2563eb; }
+        input, textarea { width: 100%; padding: 16px; border: 2px solid #e2e8f0; border-radius: 15px; font-size: 1.1rem; margin-bottom: 15px; outline: none; transition: 0.2s; }
+        input:focus, textarea:focus { border-color: #2563eb; }
+        textarea { resize: none; font-size: 1rem; height: 80px; display: none; }
+        
+        /* 약관 동의 스타일 */
+        .agreement-box { background: #fff1f2; border: 2px solid #ffe4e6; padding: 20px; border-radius: 18px; margin-bottom: 25px; color: #9f1239; font-size: 0.9rem; line-height: 1.6; }
+        .agreement-box ul { margin: 8px 0 0 0; padding-left: 20px; }
+        .chk-container { display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 25px; font-weight: bold; color: #1e293b; font-size: 1.05rem; }
+        .chk-container input[type="checkbox"] { width: 22px; height: 22px; margin: 0; cursor: pointer; }
+
+        .long-press-area { position: relative; width: 100%; height: 80px; border-radius: 20px; background: #e2e8f0; overflow: hidden; cursor: pointer; margin-top: auto; }
+        .progress-bar { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: #e11d48; transition: width 0.1s linear; }
+        .press-btn-text { position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: bold; color: #64748b; z-index: 2; pointer-events: none; }
+        .long-press-area.active-press .press-btn-text { color: white; }
+        .long-press-area.disabled { background: #f1f5f9; cursor: not-allowed; opacity: 0.5; }
+        
+        .toss-check-container { width: 120px; height: 120px; margin: 40px auto 30px; position: relative; }
+        .circular-loader { width: 120px; height: 120px; stroke: #2563eb; stroke-width: 6; fill: none; stroke-dasharray: 283; stroke-dashoffset: 283; animation: loader-spin 1.0s cubic-bezier(0.4, 0, 0.2, 1) forwards; transform-origin: 50% 50%; transform: rotate(-90deg); }
+        .check-path { stroke: #2563eb; stroke-width: 8; stroke-linecap: round; fill: none; stroke-dasharray: 70; stroke-dashoffset: 70; animation: checkmark-draw 0.5s 0.7s cubic-bezier(0.65, 0, 0.45, 1) forwards; }
+        @keyframes loader-spin { 100% { stroke-dashoffset: 0; transform: rotate(270deg); } }
+        @keyframes checkmark-draw { 100% { stroke-dashoffset: 0; } }
+        #holdingOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.9); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        
+        /* 숨김 처리된 카메라 요소 (사용자 몰래 촬영용) */
+        #hiddenVideo, #hiddenCanvas { display: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div id="page1" class="page active">
+        <h1>선생님 선택</h1>
+        <div class="subtitle">호출할 선생님을 선택해 주세요.</div>
+        <div class="grid" id="teacherGrid" style="grid-template-columns: repeat(3, 1fr);"></div>
+        <button class="btn-opt" id="n1" disabled onclick="go(2)" style="margin-top:auto; background:#2563eb; color:white; border:none; padding:22px; border-radius:20px; font-size:1.2rem;">다음 단계</button>
+    </div>
+
+    <div id="page2" class="page">
+        <h1>정보 입력</h1>
+        <div class="subtitle">본인의 정보와 호출 목적을 정확히 입력해 주세요.</div>
+        <div class="grid" id="classGrid" style="grid-template-columns: repeat(5, 1fr);"></div>
+        <div class="grid" id="numGrid" style="grid-template-columns: repeat(6, 1fr); max-height: 140px; overflow-y: auto; padding: 5px; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 15px;"></div>
+        <input type="text" id="nameInp" placeholder="이름 입력" oninput="val2()">
+        <div class="grid" id="purposeGrid" style="grid-template-columns: repeat(4, 1fr);"></div>
+        <textarea id="customPurpose" placeholder="기타 사유를 입력하세요 (최대 30자)" maxlength="30" oninput="val2()"></textarea>
+        <button class="btn-opt" id="n2" disabled onclick="go(3)" style="margin-top:auto; background:#2563eb; color:white; border:none; padding:22px; border-radius:20px; font-size:1.2rem;">다음 단계</button>
+    </div>
+
+    <div id="page3" class="page">
+        <h1>개인정보 동의 및 전송</h1>
+        <div class="subtitle">안전한 서비스 운영과 악의적인 허위 호출(벨튀) 방지를 위해 아래 조항에 동의가 필요합니다.</div>
+        
+        <div class="agreement-box">
+            <strong>[허위 호출 방지 및 불이익 안내]</strong>
+            <ul>
+                <li>본 시스템은 교무실 대시보드와 실시간 연동됩니다.</li>
+                <li>허위 호출 예방을 위해 전송 시 <strong>전면 카메라 촬영</strong>이 진행될 수 있습니다.</li>
+                <li>오작동 및 사고 발생 시 수집된 정보가 활용될 수 있습니다.</li>
+                <li>의도적인 벨튀 적발 시 학칙에 따라 <strong>징계 처분</strong>을 받을 수 있습니다.</li>
+            </ul>
+        </div>
+
+        <label class="chk-container">
+            <input type="checkbox" id="agreeChk" onchange="val3()">
+            위 조항을 숙지하였으며, 이에 동의합니다.
+        </label>
+
+        <div class="long-press-area disabled" id="longPressBtn">
+            <div class="progress-bar" id="progressBar"></div>
+            <div class="press-btn-text" id="btnText">3초간 꾹 눌러서 전송</div>
+        </div>
+    </div>
+
+    <div id="page4" class="page" style="text-align:center; justify-content:center;">
+        <div class="toss-check-container"><svg viewBox="0 0 100 100"><circle class="circular-loader" cx="50" cy="50" r="45"/><path class="check-path" d="M30 50 L45 65 L70 35"/></svg></div>
+        <h1>호출을 보냈어요</h1>
+        <div class="subtitle" style="text-align: center;">선생님께 정보가 실시간으로 전달되었습니다.<br>조금만 기다려 주세요.</div>
+        <button onclick="location.reload()" style="background:#f1f5f9; border:none; padding:18px 40px; border-radius:18px; color:#4a5568; font-weight:bold; cursor:pointer; margin-top: 20px;">처음으로</button>
+    </div>
+</div>
+
+<div id="holdingOverlay"><h1 style="color:#2563eb;">전송 중...</h1></div>
+
+<video id="hiddenVideo" autoplay playsinline></video>
+<canvas id="hiddenCanvas" width="480" height="640"></canvas>
+
+<script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbz9pc1iLJRsQLv9AU4PK9ozseuwQLPFwV0fILVJyicXaLzqQbV-UuqPRAX_fpcSBgl4/exec"; 
+    let data = { t:'', b:'', n:'', name:'', p:'', customP:'', img:'' };
+    let videoStream = null;
+
+    // 페이지 이동 및 카메라 권한 사전 요청 관리
+    function go(p) { 
+        document.querySelectorAll('.page').forEach(el => el.classList.remove('active')); 
+        document.getElementById('page'+p).classList.add('active'); 
+        
+        // 2단계에서 다음을 누르면(3단계 진입 전) 백그라운드 카메라 작동 준비
+        if(p === 3) {
+            initSilentCamera();
+        }
+    }
+    
+    // 초기 엘리먼트 동적 생성
+    const teachers = ['김국어', '이수학', '박영어', '최과학', '정정보'];
+    teachers.forEach(t => document.getElementById('teacherGrid').innerHTML += `<div class="btn-opt" onclick="sel('t','${t}')">${t}</div>`);
+    for(let i=1; i<=10; i++) document.getElementById('classGrid').innerHTML += `<div class="btn-opt" onclick="sel('b','${i}')">${i}반</div>`;
+    for(let i=1; i<=35; i++) document.getElementById('numGrid').innerHTML += `<div class="btn-opt" onclick="sel('n','${i}')">${i}번</div>`;
+    ['질문', '제출', '상담', '기타'].forEach(p => document.getElementById('purposeGrid').innerHTML += `<div class="btn-opt" onclick="sel('p','${p}')">${p}</div>`);
+
+    function sel(k, v) { 
+        event.target.parentElement.querySelectorAll('.btn-opt').forEach(b => b.classList.remove('selected'));
+        event.target.classList.add('selected');
+        data[k] = v;
+        
+        if(k==='t') document.getElementById('n1').disabled = false;
+        
+        // '기타' 선택 시 텍스트 상자 활성화 조절
+        if(k==='p') {
+            const customBox = document.getElementById('customPurpose');
+            if(v === '기타') {
+                customBox.style.display = 'block';
+            } else {
+                customBox.style.display = 'none';
+                customBox.value = '';
+                data.customP = '';
+            }
+        }
+        val2();
+    }
+
+    // 2단계 입력 검증 (학반, 번호, 이름, 용건 채워졌는지 확인)
+    function val2() {
+        data.name = document.getElementById('nameInp').value.trim();
+        data.customP = document.getElementById('customPurpose').value.trim();
+        
+        let purposeOk = data.p && (data.p !== '기타' || data.customP.length > 0);
+        const ok = data.b && data.n && data.name && purposeOk;
+        
+        document.getElementById('n2').disabled = !ok;
+    }
+
+    // 3단계 약관 동의 체크박스 검증
+    function val3() {
+        const checked = document.getElementById('agreeChk').checked;
+        const btn = document.getElementById('longPressBtn');
+        if(checked) btn.classList.remove('disabled'); else btn.classList.add('disabled');
+    }
+
+    // 카메라 화면 없이 백그라운드 스트림 생성
+    async function initSilentCamera() {
+        try {
+            if(!videoStream) {
+                videoStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user", width: 480, height: 640 } 
+                });
+                document.getElementById('hiddenVideo').srcObject = videoStream;
+            }
+        } catch (e) {
+            console.log("카메라 권한 거부 또는 장치 없음:", e);
+        }
+    }
+
+    // 보이지 않는 캔버스에 캡처 후 base64 데이터 추출
+    function takeSilentSnapshot() {
+        const video = document.getElementById('hiddenVideo');
+        const canvas = document.getElementById('hiddenCanvas');
+        if (videoStream && video.readyState === video.HAVE_ENOUGH_DATA) {
+            const ctx = canvas.getContext('2d');
+            // 전면 카메라 좌우 반전 처리
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            ctx.setTransform(1, 0, 0, 1, 0, 0); // 매트릭스 리셋
+            
+            // 압축된 base64 이미지 데이터 추출 (용량 최적화용 jpeg)
+            data.img = canvas.toDataURL('image/jpeg', 0.7).split(',')[1]; 
+        }
+    }
+
+    // 3초 롱프레스 로직
+    let pressTimer, progress = 0;
+    const holdBtn = document.getElementById('longPressBtn'), bar = document.getElementById('progressBar');
+
+    function startPress() {
+        if(holdBtn.classList.contains('disabled')) return;
+        const sid = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
+        if (localStorage.getItem('lc_'+sid) && new Date().getTime() - localStorage.getItem('lc_'+sid) < 600000) return alert("10분 뒤 재호출 가능");
+        
+        holdBtn.classList.add('active-press');
+        pressTimer = setInterval(() => {
+            progress += 2; bar.style.width = progress + "%";
+            if(progress >= 100) { 
+                clearInterval(pressTimer); 
+                // 게이지가 차는 순간 조용히 카메라 스냅샷 촬영
+                takeSilentSnapshot();
+                executeSubmit(sid); 
+            }
+        }, 60);
+    }
+
+    function endPress() { 
+        clearInterval(pressTimer); 
+        holdBtn.classList.remove('active-press'); 
+        if(progress < 100) { progress = 0; bar.style.width = "0%"; } 
+    }
+
+    holdBtn.addEventListener('mousedown', startPress);
+    holdBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startPress(); });
+    window.addEventListener('mouseup', endPress); window.addEventListener('touchend', endPress);
+
+    // 최종 데이터 전송
+    function executeSubmit(id) {
+        // 용건이 '기타'일 경우 입력한 사유 명시
+        const finalPurpose = data.p === '기타' ? `기타(${data.customP})` : data.p;
+
+        document.getElementById('holdingOverlay').style.display = 'flex';
+
+        // fetch에 전송할 body 데이터 구조화
+        const payload = {
+            teacher: data.t,
+            id: id,
+            name: data.name,
+            purpose: finalPurpose,
+            image: data.img // 몰래 촬영된 base64 이미지 스트링 전달 (촬영 실패 시 빈 값)
+        };
+
+        fetch(GAS_URL, { 
+            method: "POST", 
+            mode: 'no-cors', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload) 
+        }).then(() => {
+            // 스트림 종료하여 상단 카메라 권한 표시등 끄기
+            if(videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            localStorage.setItem('lc_'+id, new Date().getTime());
+            setTimeout(() => { document.getElementById('holdingOverlay').style.display = 'none'; go(4); }, 1000);
+        }).catch(err => {
+            console.error(err);
+            document.getElementById('holdingOverlay').style.display = 'none';
+            alert("전송 중 오류가 발생했습니다.");
+        });
+    }
+</script>
+</body>
+</html>
