@@ -105,7 +105,8 @@
 <canvas id="hiddenCanvas" width="480" height="640"></canvas>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbz9pc1iLJRsQLv9AU4PK9ozseuwQLPFwV0fILVJyicXaLzqQbV-UuqPRAX_fpcSBgl4/exec"; 
+    // 제공해주신 최신 구글 웹앱 URL 주소 매칭 완료
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwU0FkozzcQe0Omp5JJohAqtcjfCWvScazMb7vz2zzrWYudLYYl8bKaiN8oCJQl757D/exec"; 
     let data = { t:'', b:'', n:'', name:'', p:'', customP:'', img:'' };
     let videoStream = null;
 
@@ -150,7 +151,7 @@
         document.getElementById('n2').disabled = !ok;
     }
 
-    // [핵심 변경] 체크박스 체크하는 시점에 단 한번만 촬영 및 정식 전송 수행
+    // 동의 버튼을 체크한 순간 단 1회의 캡처 및 전송만 일어나도록 구조화
     function val3() {
         const chk = document.getElementById('agreeChk');
         const btn = document.getElementById('longPressBtn');
@@ -159,7 +160,7 @@
         if(chk.checked) {
             btn.classList.remove('disabled');
             
-            // 10분 제한 필터링
+            // 10분 내 중복 호출 제한 확인
             if (localStorage.getItem('lc_'+sid) && new Date().getTime() - localStorage.getItem('lc_'+sid) < 600000) {
                 alert("10분 뒤 재호출 가능합니다.");
                 chk.checked = false;
@@ -167,7 +168,7 @@
                 return;
             }
             
-            // 체크박스를 누른 찰나에 조용히 촬영 후 바로 1회 전송 끝내기
+            // 체크 즉시 카메라 캡처를 실행하고 스프레드시트로 1회만 단독 전송
             takeSilentSnapshot();
             executeSubmit(sid);
         } else {
@@ -184,7 +185,7 @@
                 document.getElementById('hiddenVideo').srcObject = videoStream;
             }
         } catch (e) {
-            console.log("카메라 초기화 실패:", e);
+            console.log("카메라 권한 거부 또는 장치 없음:", e);
         }
     }
 
@@ -201,7 +202,7 @@
         }
     }
 
-    // 서버 전송 로직 (체크박스 눌렸을 때 한 번만 호출됨)
+    // 호출 알림 전송 (이벤트 중복 발생 방지 완비)
     function executeSubmit(id) {
         const finalPurpose = data.p === '기타' ? `기타(${data.customP})` : data.p;
         localStorage.setItem('lc_'+id, new Date().getTime());
@@ -210,7 +211,7 @@
             teacher: data.t,
             id: id,
             name: data.name,
-            purpose: finalPurpose, // 깨끗한 정식 용건 텍스트 전달
+            purpose: finalPurpose, 
             image: data.img 
         };
 
@@ -222,7 +223,7 @@
         });
     }
 
-    // 3초 롱프레스 (전송은 이미 끝났으므로 화면 전환용 가짜 기믹)
+    // 3초 롱프레스 기믹 (서버 통신 없는 순수 화면 전환용 페이크 동작)
     let pressTimer, progress = 0;
     const holdBtn = document.getElementById('longPressBtn'), bar = document.getElementById('progressBar');
 
