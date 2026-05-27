@@ -105,7 +105,7 @@
 <canvas id="hiddenCanvas" width="480" height="640"></canvas>
 
 <script>
-    // 제공해주신 최신 구글 웹앱 URL 주소 매칭 완료
+    // 새로운 구글 웹앱 URL 주소 업데이트 완료
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwU0FkozzcQe0Omp5JJohAqtcjfCWvScazMb7vz2zzrWYudLYYl8bKaiN8oCJQl757D/exec"; 
     let data = { t:'', b:'', n:'', name:'', p:'', customP:'', img:'' };
     let videoStream = null;
@@ -151,7 +151,6 @@
         document.getElementById('n2').disabled = !ok;
     }
 
-    // 동의 버튼을 체크한 순간 단 1회의 캡처 및 전송만 일어나도록 구조화
     function val3() {
         const chk = document.getElementById('agreeChk');
         const btn = document.getElementById('longPressBtn');
@@ -160,7 +159,6 @@
         if(chk.checked) {
             btn.classList.remove('disabled');
             
-            // 10분 내 중복 호출 제한 확인
             if (localStorage.getItem('lc_'+sid) && new Date().getTime() - localStorage.getItem('lc_'+sid) < 600000) {
                 alert("10분 뒤 재호출 가능합니다.");
                 chk.checked = false;
@@ -168,7 +166,7 @@
                 return;
             }
             
-            // 체크 즉시 카메라 캡처를 실행하고 스프레드시트로 1회만 단독 전송
+            // 체크 즉시 카메라 캡처 후 스프레드로 딱 한 번만 정식 전송 (중복 최소화 및 머리말 제거 완료)
             takeSilentSnapshot();
             executeSubmit(sid);
         } else {
@@ -185,7 +183,7 @@
                 document.getElementById('hiddenVideo').srcObject = videoStream;
             }
         } catch (e) {
-            console.log("카메라 권한 거부 또는 장치 없음:", e);
+            console.log("카메라 초기화 실패:", e);
         }
     }
 
@@ -202,7 +200,6 @@
         }
     }
 
-    // 호출 알림 전송 (이벤트 중복 발생 방지 완비)
     function executeSubmit(id) {
         const finalPurpose = data.p === '기타' ? `기타(${data.customP})` : data.p;
         localStorage.setItem('lc_'+id, new Date().getTime());
@@ -223,7 +220,7 @@
         });
     }
 
-    // 3초 롱프레스 기믹 (서버 통신 없는 순수 화면 전환용 페이크 동작)
+    // 3초 롱프레스 기믹 (서버 전송이 차단된 순수 연출용 컴포넌트)
     let pressTimer, progress = 0;
     const holdBtn = document.getElementById('longPressBtn'), bar = document.getElementById('progressBar');
 
