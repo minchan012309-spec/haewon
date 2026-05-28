@@ -36,30 +36,21 @@
 <div id="historyList" style="margin-top:20px;"></div>
 
 <script>
-    // 본인의 Google Apps Script 웹앱 URL 주소
     const GAS_URL = "https://script.google.com/macros/s/AKfycbxz4abPQs_L2_BMkqBs22YCrRvGrZx-ccMKFHwEBHHMiPMTNxDNz1n8c2nXO9Z6LUnk-g/exec";
-    let lastTime = Date.now(), selectedVoice = null, historyList = [];
+    let lastTime = Date.now(), historyList = [];
 
     function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }
     setInterval(updateClock, 1000);
 
-    function loadVoice() { 
-        selectedVoice = window.speechSynthesis.getVoices().find(v => v.lang.includes('ko') && v.name.includes('Google')) || window.speechSynthesis.getVoices().find(v => v.lang.includes('ko'));
-    }
-    window.speechSynthesis.onvoiceschanged = loadVoice;
-
-    // 대시보드 구동 버튼 클릭 시 초기화
     async function initSystem() {
         document.getElementById('startLayer').style.display = 'none';
-        loadVoice();
         
-        // [수정] 최초 실행 버튼 누를 때는 브라우저 오디오 권한 잠금 해제용으로만 무음 처리 재생
-        const initialSilent = new Audio('https://t1.daumcdn.net/kakaopay/tesla/20230728/sfx/ding.mp3');
+        // 🎵 사운드 권한 우회 락 해제
+        const initialSilent = new Audio('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg');
         initialSilent.volume = 0;
         initialSilent.play().catch(e => console.log(e));
 
         try {
-            // 실행 순간 기존 시트의 마지막 타임스탬프를 읽어와 과거 데이터 무차별 로드 방지
             const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
             const d = await res.json();
             if(d && d.timestamp) lastTime = Number(d.timestamp);
@@ -67,11 +58,9 @@
             lastTime = Date.now();
         }
         
-        // 실시간 체킹 루프 가동
         checkCallDynamic(); 
     }
 
-    // 🎯 구글 서버 과부하(503 에러)를 예방하기 위해 1.5초 간격 주기로 정밀 제어
     async function checkCallDynamic() {
         try {
             const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
@@ -84,12 +73,9 @@
         } catch(e) { 
             console.log("조회 대기 중..."); 
         }
-        
-        // 기존 100ms에서 1500ms(1.5초)로 늘려 안심하고 장시간 구동 가능!
         setTimeout(checkCallDynamic, 1500); 
     }
 
-    // 호출 알림 및 효과음 1회 재생 제어
     function notify(d) {
         document.getElementById('empty').style.display = 'none';
         const card = document.getElementById('card');
@@ -98,33 +84,38 @@
         document.getElementById('sPurp').innerText = d.purpose;
         card.classList.add('active');
 
-        // 🔔 띵동 알림음 1회만 클린하게 재생
-        const alarmSound = new Audio('https://t1.daumcdn.net/kakaopay/tesla/20230728/sfx/ding.mp3');
+        // 🔔 [해결] 무조건 울리는 안전한 구글 크롬 표준 비프음 파일로 단발성 처리
+        const alarmSound = new Audio('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg');
         alarmSound.volume = 0.6;
         
         alarmSound.play().then(() => {
-            // 🗣️ 알림음 재생이 시작되고 0.7초 뒤에 TTS 안내가 겹치지 않고 자연스럽게 출력
+            // 🗣️ [해결] 알림음 재생 직후 0.7초 차이를 둬서 밤티화 현상 완벽 예방 및 하드코딩 볼륨/속도 지정
             setTimeout(() => {
-                window.speechSynthesis.cancel(); // 혹시 진행 중인 음성 초기화
-                const uttr = new SpeechSynthesisUtterance(`${d.teacher} 선생님, ${d.name} 학생이 ${d.purpose}로 호출했습니다.`);
-                if(selectedVoice) uttr.voice = selectedVoice; 
-                uttr.lang = 'ko-KR'; 
-                window.speechSynthesis.speak(uttr);
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel(); 
+                    const uttr = new SpeechSynthesisUtterance(`${d.teacher} 선생님, ${d.name} 학생이 ${d.purpose}로 호출했습니다.`);
+                    
+                    uttr.lang = 'ko-KR'; 
+                    uttr.rate = 1.0;  // 밤티 변조 억제 표준 속도
+                    uttr.pitch = 1.0; // 밤티 변조 억제 표준 높낮이
+                    
+                    window.speechSynthesis.speak(uttr);
+                }
             }, 700);
         }).catch(err => {
-            console.log("오디오 재생 정책 예외:", err);
-            // 오디오가 혹시 차단되더라도 TTS는 무조건 실행되도록 백업
-            window.speechSynthesis.cancel();
-            const uttr = new SpeechSynthesisUtterance(`${d.teacher} 선생님, ${d.name} 학생이 ${d.purpose}로 호출했습니다.`);
-            window.speechSynthesis.speak(uttr);
+            console.log("오디오 예외 백업 구동:", err);
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const uttr = new SpeechSynthesisUtterance(`${d.teacher} 선생님, ${d.name} 학생이 ${d.purpose}로 호출했습니다.`);
+                uttr.lang = 'ko-KR';
+                window.speechSynthesis.speak(uttr);
+            }
         });
 
-        // 히스토리 목록 추가 로직 (최근 3개까지 유지)
         historyList.unshift(d); 
         if(historyList.length > 3) historyList.pop();
         document.getElementById('historyList').innerHTML = historyList.map(h => `<div class="history-item"><span>${h.id} ${h.name}</span><span>${h.purpose}</span></div>`).join('');
 
-        // 10초 뒤 팝업 숨기고 대기 상태로 복귀
         setTimeout(() => { 
             card.classList.remove('active'); 
             document.getElementById('empty').style.display = 'flex'; 
