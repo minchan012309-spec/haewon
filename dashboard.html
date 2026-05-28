@@ -43,11 +43,10 @@
     function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }
     setInterval(updateClock, 1000);
 
-    // 🗣️ [밤티 방지 핵심] 브라우저 로드 시 한국어 전용 대성통곡 정식 음성을 사전에 서칭 및 강제 지정
+    // 한국어 오디오 엔진 사전 매칭으로 변조 방지 패치
     function getBestKoVoice() {
         if (!('speechSynthesis' in window)) return;
         const voices = window.speechSynthesis.getVoices();
-        // 1순위: 가장 자연스러운 구글 한국어, 2순위: 시스템 내장 내추럴 한국어, 3순위: 아무 한국어 나
         koVoice = voices.find(v => v.lang.includes('ko') && v.name.includes('Google')) || 
                   voices.find(v => v.lang.includes('ko') && v.name.includes('Natural')) ||
                   voices.find(v => v.lang.includes('ko'));
@@ -61,7 +60,7 @@
         document.getElementById('startLayer').style.display = 'none';
         getBestKoVoice();
         
-        // 사운드 트랙 락 해제용 무음 스타트 (새로운 맑은 띵동 벨소리 주소 적용)
+        // 오디오 초기 권한 잠금 해제용 무음 가동
         const initialSilent = new Audio('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg');
         initialSilent.volume = 0;
         initialSilent.play().catch(e => console.log(e));
@@ -77,6 +76,7 @@
         checkCallDynamic(); 
     }
 
+    // ⚡ 초고속 실시간 체킹 루프 (0.4초 딜레이 튜닝)
     async function checkCallDynamic() {
         try {
             const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
@@ -89,7 +89,7 @@
         } catch(e) { 
             console.log("조회 대기 중..."); 
         }
-        setTimeout(checkCallDynamic, 1500); 
+        setTimeout(checkCallDynamic, 400); 
     }
 
     function notify(d) {
@@ -100,57 +100,54 @@
         document.getElementById('sPurp').innerText = d.purpose;
         card.classList.add('active');
 
-        // 🔔 [수정] 학교 교무실에 딱 어울리는 아주 짧고 정갈한 고음질 "띵동~" 비프음 (볼륨 100%)
-        const alarmSound = new Audio('https://actions.google.com/sounds/v1/multimedia/ambient_hum_air_conditioner.ogg'); // 대체 백업 주소 대신 아래 다이렉트 톤 생성 코드를 활용해 보안 100% 무조건 울리는 띵동 제작
-        
-        // 🎹 브라우저 자체 오디오 컨텍스트로 생성하는 맑고 정교한 하이라이트 2음보 "띵~동~" (네트워크 지연 없이 볼륨 MAX)
+        // 🎹 고급 호텔 데스크 스타일의 청아하고 웅장한 "띵~동~" 사운드 주파수 생성 (볼륨 MAX)
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             const ctx = new AudioContext();
             
-            // 첫 번째 음 "띵" (고음)
-            const osc1 = ctx.createOscillator();
-            const gain1 = ctx.createGain();
-            osc1.type = 'sine';
-            osc1.frequency.setValueAtTime(880, ctx.currentTime); // A5 음역대
-            gain1.gain.setValueAtTime(0.8, ctx.currentTime);
-            gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-            osc1.connect(gain1);
-            gain1.connect(ctx.destination);
-            osc1.start();
-            osc1.stop(ctx.currentTime + 0.4);
+            const playTone = (freq, startTime, duration) => {
+                const osc = ctx.createOscillator();
+                const overtone = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, startTime);
+                
+                overtone.type = 'sine';
+                overtone.frequency.setValueAtTime(freq * 2, startTime); 
+                
+                gainNode.gain.setValueAtTime(0, startTime);
+                gainNode.gain.linearRampToValueAtTime(0.9, startTime + 0.02); 
+                gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+                
+                osc.connect(gainNode);
+                overtone.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                
+                osc.start(startTime);
+                overtone.start(startTime);
+                osc.stop(startTime + duration);
+                overtone.stop(startTime + duration);
+            };
 
-            // 두 번째 음 "동" (약간 낮은 정박)
-            setTimeout(() => {
-                const osc2 = ctx.createOscillator();
-                const gain2 = ctx.createGain();
-                osc2.type = 'sine';
-                osc2.frequency.setValueAtTime(659.25, ctx.currentTime); // E5 음역대
-                gain2.gain.setValueAtTime(0.8, ctx.currentTime);
-                gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-                osc2.connect(gain2);
-                gain2.connect(ctx.destination);
-                osc2.start();
-                osc2.stop(ctx.currentTime + 0.5);
-            }, 180);
+            const now = ctx.currentTime;
+            playTone(1318.51, now, 0.8);        // 맑은 고음 "띵~"
+            playTone(880.00, now + 0.22, 1.0);  // 깊은 울림 저음 "동~"
 
         } catch (e) {
-            console.log("자체 비프음 생성 실패, 오디오 객체 백업 실행");
+            console.log("오디오 생성 오류:", e);
         }
 
-        // 🗣️ [수정] "띵동~" 소리가 끝나는 시점(0.6초 뒤)에 밤티 변조를 완전히 해결한 정석 목소리 매칭
+        // 🗣️ TTS 출력 (0.65초 뒤 띵동 사운드와 자연스럽게 연계 및 변조 억제 고정 파라미터 적용)
         setTimeout(() => {
             if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // 큐 초기화
-                
-                // 원하는 출력 문구 포맷팅 반영
+                window.speechSynthesis.cancel(); 
                 const uttr = new SpeechSynthesisUtterance(`${d.teacher} 선생님, ${d.name} 학생이 ${d.purpose}로 호출했습니다.`);
                 
-                // 밤티화 현상 완벽 억제용 물리 파라미터 재고정
                 if(koVoice) uttr.voice = koVoice; 
                 uttr.lang = 'ko-KR'; 
-                uttr.rate = 0.95; // 아주 살짝 느리게 해서 가독성 극대화 (기계음 속도 버그 필터)
-                uttr.pitch = 1.0; // 표준 높낮이 고정
+                uttr.rate = 0.95; 
+                uttr.pitch = 1.0; 
                 
                 window.speechSynthesis.speak(uttr);
             }
