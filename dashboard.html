@@ -1,6 +1,107 @@
-    // 🔔 효과음 및 음성 안내(TTS) 제어 함수
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>교무실 호출 실시간 대시보드</title>
+    <style>
+        @font-face { font-family: 'Paperlogy'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-Regular.woff2') format('woff2'); }
+        * { font-family: 'Paperlogy', sans-serif; box-sizing: border-box; }
+        body { margin: 0; background: #0f172a; color: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
+        .main-container { text-align: center; z-index: 10; transition: filter 0.3s; }
+        h1 { font-size: 2.8rem; margin-bottom: 10px; letter-spacing: -1px; background: linear-gradient(to right, #38bdf8, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .status-badge { background: #1e293b; border: 1px solid #334155; padding: 12px 30px; border-radius: 50px; display: inline-block; font-size: 1.1rem; color: #94a3b8; margin-bottom: 40px; }
+        .status-badge span { color: #10b981; font-weight: bold; margin-right: 6px; }
+        .start-btn { background: #2563eb; color: white; border: none; padding: 20px 50px; font-size: 1.4rem; font-weight: bold; border-radius: 20px; cursor: pointer; box-shadow: 0 10px 30px rgba(37,99,235,0.4); transition: 0.2s; }
+        .start-btn:hover { background: #1d4ed8; transform: translateY(-2px); }
+        .start-btn:active { transform: translateY(1px); }
+        
+        /* 🚨 실시간 긴급 팝업 스타일링 */
+        .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2,6,23,0.85); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); transform: scale(1.1); }
+        .popup-overlay.active { opacity: 1; pointer-events: auto; transform: scale(1); }
+        .popup-content { background: #1e293b; border: 3px solid #2563eb; width: 90%; max-width: 500px; border-radius: 40px; padding: 40px; text-align: center; box-shadow: 0 25px 70px rgba(0,0,0,0.5); position: relative; animation: pulseBorder 2s infinite; }
+        @keyframes pulseBorder { 0% { border-color: #2563eb; } 50% { border-color: #38bdf8; } 100% { border-color: #2563eb; } }
+        
+        .pop-title { font-size: 2.2rem; color: #38bdf8; font-weight: 800; margin-bottom: 5px; }
+        .pop-student { font-size: 2.5rem; color: white; font-weight: bold; margin: 20px 0 10px; }
+        .pop-purpose { background: #0f172a; padding: 15px 25px; border-radius: 18px; font-size: 1.2rem; color: #e2e8f0; display: inline-block; margin-bottom: 25px; border: 1px solid #334155; }
+        .student-image { width: 100%; max-height: 280px; object-fit: cover; border-radius: 25px; border: 2px solid #475569; margin-bottom: 25px; display: none; background: #0f172a; }
+        .close-btn { background: #ef4444; color: white; border: none; padding: 16px 40px; font-size: 1.1rem; font-weight: bold; border-radius: 15px; cursor: pointer; width: 100%; transition: 0.2s; }
+        .close-btn:hover { background: #dc2626; }
+    </style>
+</head>
+<body>
+
+<div class="main-container" id="mainContent">
+    <h1>교무실 실시간 호출 대시보드</h1>
+    <div class="status-badge" id="statusTxt"><span>●</span> 시스템 대기 중</div>
+    <br>
+    <button class="start-btn" id="startBtn" onclick="initDashboard()">대시보드 수신 시작하기</button>
+</div>
+
+<div class="popup-overlay" id="popup">
+    <div class="popup-content">
+        <div class="pop-title" id="notiTeacher">인증 선생님</div>
+        <div class="pop-student" id="notiStudent">00000 홍길동</div>
+        <div class="pop-purpose" id="notiPurpose">목적: 질문이 있습니다.</div>
+        <img src="" class="student-image" id="notiImg" alt="학생 전면 사진">
+        <button class="close-btn" onclick="dismissPopup()">상황 확인 완료</button>
+    </div>
+</div>
+
+<script>
+    // 🌟 본인의 구글 웹앱 URL 주소 입력 필수 (index.html과 완전히 똑같은 주소)
+    const GAS_URL = "YOUR_GOOGLE_WEBAPP_URL_HERE"; 
+    
+    let lastTime = 0; 
+    let isRunning = false;
+
+    // 대시보드 첫 실행 시 타임스탬프 기준점 잠금 및 수신 시작
+    async function initDashboard() {
+        if(isRunning) return;
+        document.getElementById('startBtn').style.display = 'none';
+        document.getElementById('statusTxt').innerHTML = `<span style="color:#38bdf8; animation: blink 1s infinite;">●</span> 실시간 감시 엔진 구동 중`;
+        
+        try {
+            // 현재 구글 시트에 있는 가장 최신 행의 타임스탬프를 읽어와 기준점(과거 내역 불타오름 방지)으로 설정
+            const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
+            const d = await res.json();
+            if(d && d.timestamp) {
+                lastTime = Number(d.timestamp);
+            }
+        } catch(e) {
+            console.log("초기 기준점 로딩 대기 중...");
+            lastTime = Date.now(); // 실패 시 현재 시간 기준 차단
+        }
+        
+        isRunning = true;
+        checkCallDynamic();
+    }
+
+    // 🎯 구글 서버 503 에러 방지용 최적화 1.5초 루프 엔진
+    async function checkCallDynamic() {
+        if(!isRunning) return;
+        try {
+            const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
+            if (!res.ok) throw new Error("네트워크 지연");
+            
+            const d = await res.json();
+            
+            // 시트 데이터가 갱신되어 타임스탬프 값이 증가한 경우에만 경보 발령
+            if(d && d.timestamp && Number(d.timestamp) > lastTime) {
+                lastTime = Number(d.timestamp);
+                notify(d);
+            }
+        } catch(e) { 
+            console.log("서버 상태 대기 중...", e); 
+        }
+        
+        // 1.5초(1500ms) 여유 주기로 과부하 필터 완벽 회피
+        setTimeout(checkCallDynamic, 1500); 
+    }
+
+    // 🔔 효과음 및 TTS 음성 안내 가동 로직
     function notify(d) {
-        // 1. 팝업창 데이터 바인딩 및 화면 표시 로직 (기존 코드 유지)
         document.getElementById('notiTeacher').innerText = d.teacher + " 선생님";
         document.getElementById('notiStudent').innerText = d.id + " " + d.name;
         document.getElementById('notiPurpose').innerText = "목적: " + d.purpose;
@@ -13,32 +114,28 @@
             imgEl.style.display = "none";
         }
         
+        document.getElementById('mainContent').style.filter = "blur(10px)";
         document.getElementById('popup').classList.add('active');
 
-        // 🎯 2. [띵동 효과음 추가] 오디오 객체 생성 및 재생
-        // 고품질 오디오 리소스를 활용한 알림음 세팅
-        const alertSound = new Audio("https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg"); 
-        alertSound.volume = 0.5; // 소리 크기 조절 (0.0 ~ 1.0)
+        // 🎵 [1단계] 띵동~ 고품질 알림음 재생
+        const alertSound = new Audio("https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg");
+        alertSound.volume = 0.5;
         
         alertSound.play().then(() => {
-            // 3. 효과음이 끝나거나 재생된 직후(약 0.8초 뒤) TTS 음성 안내 가동
+            // 🗣️ [2단계] 효과음 재생 직후(0.8초 여유 마진) TTS 음성 안내 실행 (음이 겹치지 않음)
             setTimeout(() => {
                 if ('speechSynthesis' in window) {
-                    // 기존 TTS 인스턴스 초기화 (음성 중첩 방지)
-                    window.speechSynthesis.cancel(); 
-                    
+                    window.speechSynthesis.cancel(); // 진행 중인 음성 초기화
                     const text = `${d.teacher} 선생님, ${d.id} ${d.name} 학생이 호출하였습니다.`;
                     const speech = new SpeechSynthesisUtterance(text);
                     speech.lang = 'ko-KR';
-                    speech.rate = 1.0;  // 말하는 속도
-                    speech.pitch = 1.0; // 음높이
-                    
+                    speech.rate = 1.0;
                     window.speechSynthesis.speak(speech);
                 }
-            }, 800); // 800ms(0.8초)의 마진을 두어 효과음과 음성이 겹치지 않게 조율
+            }, 800);
         }).catch(err => {
-            console.log("브라우저 오디오 상호작용 제한 발생:", err);
-            // 만약 효과음 재생이 브라우저 정책에 막히면 TTS만이라도 즉시 실행되도록 예외 처리
+            console.log("오디오 재생 제한 예외 처리 발생:", err);
+            // 브라우저 정책 차단 시 오로지 TTS 수신 즉시 구동 강제 전환
             if ('speechSynthesis' in window) {
                 const text = `${d.teacher} 선생님, ${d.id} ${d.name} 학생이 호출하였습니다.`;
                 const speech = new SpeechSynthesisUtterance(text);
@@ -47,3 +144,14 @@
             }
         });
     }
+
+    function dismissPopup() {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // 닫기 누르면 안내 음성 즉시 종료
+        }
+        document.getElementById('popup').classList.remove('active');
+        document.getElementById('mainContent').style.filter = "none";
+    }
+</script>
+</body>
+</html>
