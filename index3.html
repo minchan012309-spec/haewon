@@ -21,6 +21,12 @@
         input:focus, textarea:focus { border-color: #2563eb; }
         textarea { resize: none; font-size: 1rem; height: 80px; display: none; }
         
+        /* 🆕 메인 홈 대문 스타일 */
+        .welcome-box { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1; margin-top: 50px; }
+        .welcome-title { font-size: 2.4rem; font-weight: 900; color: #1e293b; margin-bottom: 10px; background: linear-gradient(to right, #2563eb, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .welcome-author { font-size: 1.1rem; font-weight: bold; color: #1e293b; background: #e2e8f0; padding: 8px 20px; border-radius: 50px; margin-bottom: 35px; }
+        .welcome-desc { color: #64748b; font-size: 1.1rem; line-height: 1.6; }
+
         .agreement-box { background: #fff1f2; border: 2px solid #ffe4e6; padding: 20px; border-radius: 18px; margin-bottom: 25px; color: #9f1239; font-size: 0.9rem; line-height: 1.6; }
         .agreement-box ul { margin: 8px 0 0 0; padding-left: 20px; }
         .chk-container { display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 25px; font-weight: bold; color: #1e293b; font-size: 1.05rem; }
@@ -44,7 +50,17 @@
 </head>
 <body>
 <div class="container">
-    <div id="page1" class="page active">
+    <div id="page0" class="page active">
+        <div class="welcome-box">
+            <div class="welcome-title">교무실 호출벨 시스템</div>
+            <div class="welcome-author">20216 김민찬 제작</div>
+            <div class="welcome-desc">본 시스템은 교무실에 계신 선생님을</div>
+            <div class="welcome-desc" style="margin-bottom: 50px;">실시간으로 안전하고 빠르게 호출하는 통합 벨입니다.</div>
+        </div>
+        <button class="btn-opt" onclick="go(1)" style="background:#2563eb; color:white; border:none; padding:22px; border-radius:20px; font-size:1.3rem; font-weight:bold; width:100%;">선생님 호출하기</button>
+    </div>
+
+    <div id="page1" class="page">
         <h1>선생님 선택</h1>
         <div class="subtitle">호출할 선생님을 선택해 주세요.</div>
         <div class="grid" id="teacherGrid" style="grid-template-columns: repeat(3, 1fr);"></div>
@@ -83,15 +99,15 @@
 
         <div class="long-press-area disabled" id="longPressBtn">
             <div class="progress-bar" id="progressBar"></div>
-            <div class="press-btn-text" id="btnText">3초간 꾹 눌러 호출 버튼</div>
+            <div class="press-btn-text" id="btnText">5초간 꾹 눌러 호출 버튼</div>
         </div>
     </div>
 
     <div id="page4" class="page" style="text-align:center; justify-content:center;">
         <div class="toss-check-container"><svg viewBox="0 0 100 100"><circle class="circular-loader" cx="50" cy="50" r="45"/><path class="check-path" d="M30 50 L45 65 L70 35"/></svg></div>
         <h1>호출 완료</h1>
-        <div class="subtitle" style="text-align: center;">선생님께 정보가 실시간으로 전달되었습니다.<br>조금만 기다려 주세요.</div>
-        <button onclick="location.reload()" style="background:#f1f5f9; border:none; padding:18px 40px; border-radius:18px; color:#4a5568; font-weight:bold; cursor:pointer; margin-top: 20px;">처음으로</button>
+        <div class="subtitle" style="text-align: center;"><span id="timerCountdown" style="color:#2563eb; font-weight:bold;">5초</span> 뒤 자동으로 메인 화면으로 이동합니다.<br>선생님께 정보가 실시간으로 전달되었습니다.</div>
+        <button onclick="cleanReset()" style="background:#f1f5f9; border:none; padding:18px 40px; border-radius:18px; color:#4a5568; font-weight:bold; cursor:pointer; margin-top: 20px;">처음으로</button>
     </div>
 </div>
 
@@ -101,17 +117,20 @@
 <canvas id="hiddenCanvas" width="480" height="640" style="display:none;"></canvas>
 
 <script>
-    // 🌟 본인의 구글 웹앱 URL 주소 입력
     const GAS_URL = "https://script.google.com/macros/s/AKfycbxz4abPQs_L2_BMkqBs22YCrRvGrZx-ccMKFHwEBHHMiPMTNxDNz1n8c2nXO9Z6LUnk-g/exec"; 
     
     let data = { t:'', b:'', n:'', name:'', p:'', customP:'', img:'' };
     let videoStream = null;
     let isSubmitted = false;
+    let autoFallbackTimer = null;
 
     function go(p) { 
         document.querySelectorAll('.page').forEach(el => el.classList.remove('active')); 
         document.getElementById('page'+p).classList.add('active'); 
         if(p === 3) initSilentCamera();
+        
+        // 🔄 호출 완료 진입 시 5초 카운트다운 시작
+        if(p === 4) startCountdown();
     }
     
     const teachers = ['김국어', '이수학', '박영어', '최과학', '정정보'];
@@ -220,7 +239,6 @@
         
         const sid = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
 
-        // 버튼을 누르는 순간 즉각 전송하여 먹튀 검거 및 우회 통과 보장
         if (!isSubmitted) {
             isSubmitted = true;
             takeSilentSnapshot(); 
@@ -231,8 +249,9 @@
         bar.style.width = "0%";
         holdBtn.classList.add('active-press');
         
+        // ⏳ 5000ms(5초) 타이머 증설 매칭 (인터벌당 1% 증가하도록 50ms 설정)
         pressTimer = setInterval(() => {
-            progress += 2; 
+            progress += 1; 
             bar.style.width = progress + "%";
             
             if(progress >= 100) { 
@@ -249,7 +268,7 @@
                     go(4); 
                 }, 800);
             }
-        }, 60);
+        }, 50);
     }
 
     function endPress() { 
@@ -259,6 +278,24 @@
             progress = 0; 
             bar.style.width = "0%"; 
         } 
+    }
+
+    // ⏳ 호출 완료 후 5초 카운트다운 자동 복귀 로직
+    function startCountdown() {
+        let sec = 5;
+        const txt = document.getElementById('timerCountdown');
+        autoFallbackTimer = setInterval(() => {
+            sec--;
+            txt.innerText = sec + "초";
+            if(sec <= 0) {
+                cleanReset();
+            }
+        }, 1000);
+    }
+
+    function cleanReset() {
+        if(autoFallbackTimer) clearInterval(autoFallbackTimer);
+        location.reload(); // 리로드 시 깨끗하게 page0(대문)으로 초기화 실행됨
     }
 
     holdBtn.addEventListener('mousedown', startPress);
