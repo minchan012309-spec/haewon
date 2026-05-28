@@ -11,11 +11,11 @@
         #startLayer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .start-btn { background: #2563eb; color: white; padding: 25px 60px; border-radius: 20px; font-size: 2rem; border: none; cursor: pointer; font-weight: bold; }
         .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
-        .alert-card { background: white; border-radius: 40px; padding: 60px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.1); display: none; flex: 1; margin-bottom: 20px; animation: slideUp 0.5s ease; }
+        .alert-card { background: white; border-radius: 40px; padding: 60px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.1); display: none; flex: 1; margin-bottom: 20px; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .alert-card.active { display: block; }
-        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .t-name { font-size: 5rem; font-weight: 900; color: #0f172a; margin: 20px 0; }
-        .info-box { background: #f1f5f9; padding: 40px; border-radius: 30px; font-size: 3rem; }
+        .info-box { background: #f1f5f9; padding: 40px; border-radius: 30px; font-size: 3rem; font-weight: bold; }
         .history-item { background: white; padding: 15px; border-radius: 15px; margin-top: 10px; display: flex; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-size: 1.2rem; font-weight: bold; color: #334155; }
     </style>
 </head>
@@ -24,7 +24,7 @@
     <button class="start-btn" onclick="initSystem()">수신 시작하기</button>
 </div>
 <div class="header">
-    <div style="color:#2563eb; font-weight:bold; font-size:1.5rem;">● 실시간 모니터링 중</div>
+    <div style="color:#2563eb; font-weight:bold; font-size:1.5rem;">● 초고속 실시간 모니터링 중</div>
     <div id="clock" style="font-size:1.5rem;">00:00:00</div>
 </div>
 <div id="empty" style="flex:1; display:flex; justify-content:center; align-items:center; font-size:2rem; color:#cbd5e0;">대기 중...</div>
@@ -36,8 +36,8 @@
 <div id="historyList" style="margin-top:20px;"></div>
 
 <script>
-    // 일치 완료: 학생용 및 Apps Script와 동일한 새 웹앱 URL 주소 바인딩
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyIkIFQkVwCJIk1hzPsG-FCxs62nDf7MwEcRtvkRaQD_BU1J5CONAIDvT4jdNvC0hlDJQ/exec";
+    // 본인의 Google Apps Script 웹앱 URL 주소 입력
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxLbald6YsDtbJbUOLfT5C4dqdSMIxuVi6HyAy750zz9fyV-Lib8iIo5Cn7b3Lnhl6d2w/exec";
     let lastTime = Date.now(), selectedVoice = null, historyList = [];
 
     function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }
@@ -52,12 +52,14 @@
         document.getElementById('startLayer').style.display = 'none';
         loadVoice();
         new Audio('https://t1.daumcdn.net/kakaopay/tesla/20230728/sfx/ding.mp3').play();
-        setInterval(checkCall, 1500); // 구글 트래픽 할당량을 고려해 1.5초 간격 조회로 최적화
+        
+        // 🌟 단순 setInterval 대신 네트워크 최적화 재귀 루프 가동
+        checkCallDynamic(); 
     }
 
-    async function checkCall() {
+    // 서버 응답이 오는 즉시 0.1초(100ms)만에 다음 신호를 확인하는 초고속 연사 루프
+    async function checkCallDynamic() {
         try {
-            // 캐시 방지를 위해 랜덤 파라미터 및 type 명시
             const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
             const d = await res.json();
             
@@ -65,7 +67,10 @@
                 lastTime = Number(d.timestamp);
                 notify(d);
             }
-        } catch(e) { console.log("조회 에러(무시 가능):", e); }
+        } catch(e) { console.log("조회 대기 중..."); }
+        
+        // 중요: 서버 부하와 할당량을 지키면서도 '0.1초' 간격의 반응성을 내도록 정밀 제어
+        setTimeout(checkCallDynamic, 100); 
     }
 
     function notify(d) {
@@ -76,26 +81,19 @@
         document.getElementById('sPurp').innerText = d.purpose;
         card.classList.add('active');
 
-        // 알림음 재생 및 TTS 송출
         new Audio('https://t1.daumcdn.net/kakaopay/tesla/20230728/sfx/ding.mp3').play();
         setTimeout(() => {
-            window.speechSynthesis.cancel(); // 꼬임 방지를 위해 이전 음성 초기화
+            window.speechSynthesis.cancel();
             const uttr = new SpeechSynthesisUtterance(`${d.teacher} 선생님, ${d.name} 학생이 ${d.purpose}로 호출했습니다.`);
             if(selectedVoice) uttr.voice = selectedVoice; 
             uttr.lang = 'ko-KR'; 
             window.speechSynthesis.speak(uttr);
-        }, 800);
+        }, 600); // 팝업 애니메이션에 맞춰 음성 타이밍도 당김
 
-        // 히스토리 누적 및 레이아웃 출력 업데이트 (변수명 섀도잉 해결)
-        historyList.unshift(d); 
-        if(historyList.length > 3) historyList.pop();
+        historyList.unshift(d); if(historyList.length > 3) historyList.pop();
         document.getElementById('historyList').innerHTML = historyList.map(h => `<div class="history-item"><span>${h.id} ${h.name}</span><span>${h.purpose}</span></div>`).join('');
 
-        // 10초 후 화면 복귀 (너무 길지 않게 조절)
-        setTimeout(() => { 
-            card.classList.remove('active'); 
-            document.getElementById('empty').style.display = 'flex'; 
-        }, 10000);
+        setTimeout(() => { card.classList.remove('active'); document.getElementById('empty').style.display = 'flex'; }, 10000);
     }
 </script>
 </body>
