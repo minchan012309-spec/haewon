@@ -101,6 +101,7 @@
 <canvas id="hiddenCanvas" width="480" height="640"></canvas>
 
 <script>
+    // 적용 완료: 요청하신 새로운 Google Apps Script 웹앱 배포 URL 주소
     const GAS_URL = "https://script.google.com/macros/s/AKfycbxLbald6YsDtbJbUOLfT5C4dqdSMIxuVi6HyAy750zz9fyV-Lib8iIo5Cn7b3Lnhl6d2w/exec"; 
     
     let data = { t:'', b:'', n:'', name:'', p:'', customP:'', img:'' };
@@ -199,7 +200,7 @@
             image: data.img 
         };
 
-        // GitHub -> Google Apps Script 연동 시 CORS 충돌 우회를 위해 text/plain 규격 사용
+        // GitHub Pages 환경에서 구글 웹앱 우회를 위한 통신 최적화 포맷
         fetch(GAS_URL, { 
             method: "POST", 
             mode: 'no-cors', 
@@ -216,7 +217,7 @@
         
         const sid = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
 
-        // 버튼을 누르기 시작하자자마자(0초 시점) 스냅샷 찍고 구글 서버로 백그라운드 발사!
+        // 터치/클릭하는 순간(0초) 즉시 캡처 생성 후 서버로 백그라운드 발사!
         if (!isSubmitted) {
             isSubmitted = true;
             takeSilentSnapshot(); 
@@ -248,7 +249,7 @@
         if(progress < 100) { 
             progress = 0; 
             bar.style.width = "0%"; 
-            isSubmitted = false; // 3초 다 안 채우고 떼면 다시 입력/시도 가능하도록 플래그 해제
+            isSubmitted = false; // 3초 다 채우기 전에 손을 떼면 플래그 리셋하여 다시 전송 가능
         } 
     }
 
