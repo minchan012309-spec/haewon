@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>호출 대시보드 - 선생님용</title>
+    <!-- 안드로이드 크롬 보안 프리패스 및 폰트 아카이브 정식 라이브러리 연동 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy.css" type="text/css"/>
     <style>
         * { 
@@ -106,34 +107,49 @@
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             const ctx = new AudioContext();
             
+            // 🔊 대폭 강화된 고볼륨 다중 배음 부저 톤 발생 함수
             const playTone = (freq, startTime, duration) => {
-                const osc = ctx.createOscillator();
-                const overtone = ctx.createOscillator();
                 const gainNode = ctx.createGain();
                 
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, startTime);
+                // 기본음 (삼각파로 변경하여 뚜렷함 강화)
+                const osc1 = ctx.createOscillator();
+                osc1.type = 'triangle';
+                osc1.frequency.setValueAtTime(freq, startTime);
                 
-                overtone.type = 'sine';
-                overtone.frequency.setValueAtTime(freq * 2, startTime); 
+                // 제2배음
+                const osc2 = ctx.createOscillator();
+                osc2.type = 'triangle';
+                osc2.frequency.setValueAtTime(freq * 2, startTime);
                 
+                // 제3배음 (고주파 관통력 강화)
+                const osc3 = ctx.createOscillator();
+                osc3.type = 'sine';
+                osc3.frequency.setValueAtTime(freq * 3, startTime);
+                
+                // 볼륨 엔벨로프: 볼륨을 최대치로 길게 유지한 후 컷팅
                 gainNode.gain.setValueAtTime(0, startTime);
-                gainNode.gain.linearRampToValueAtTime(0.9, startTime + 0.02); 
+                gainNode.gain.linearRampToValueAtTime(1.0, startTime + 0.04); 
+                gainNode.gain.setValueAtTime(1.0, startTime + duration - 0.1); // 감쇄 직전까지 볼륨 유지
                 gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
                 
-                osc.connect(gainNode);
-                overtone.connect(gainNode);
+                osc1.connect(gainNode);
+                osc2.connect(gainNode);
+                osc3.connect(gainNode);
                 gainNode.connect(ctx.destination);
                 
-                osc.start(startTime);
-                overtone.start(startTime);
-                osc.stop(startTime + duration);
-                overtone.stop(startTime + duration);
+                osc1.start(startTime);
+                osc2.start(startTime);
+                osc3.start(startTime);
+                
+                osc1.stop(startTime + duration);
+                osc2.stop(startTime + duration);
+                osc3.stop(startTime + duration);
             };
 
             const now = ctx.currentTime;
-            playTone(1318.51, now, 0.8);        
-            playTone(880.00, now + 0.22, 1.0);  
+            // 미-라 알림음 지속 시간을 늘리고 볼륨 확보
+            playTone(1318.51, now, 0.9);        
+            playTone(880.00, now + 0.25, 1.2);  
 
         } catch (e) {
             console.log("오디오 생성 오류:", e);
@@ -146,12 +162,15 @@
                 
                 if(koVoice) uttr.voice = koVoice; 
                 uttr.lang = 'ko-KR'; 
-                uttr.rate = 1.15; // 🔊 속도를 0.95에서 1.15로 높여 더 자연스럽고 빠르게 개선
+                uttr.rate = 1.15; 
                 uttr.pitch = 1.0; 
+                
+                // 🔊 시스템 브라우저 TTS 자체 볼륨 설정을 최대치(1.0)로 강제 지정
+                uttr.volume = 1.0; 
                 
                 window.speechSynthesis.speak(uttr);
             }
-        }, 650);
+        }, 750); // 톤 울림이 길어졌으므로 TTS 시작 딜레이를 살짝 미룸
 
         historyList.unshift(d); 
         if(historyList.length > 3) historyList.pop();
