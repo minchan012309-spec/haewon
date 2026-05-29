@@ -5,13 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>호출 대시보드 - 선생님용</title>
     <style>
-        /* 갤탭(안드로이드) 차단 버그 해결용 정석 CDN 주소 적용 */
-        @font-face { 
-            font-family: 'Paperlogy'; 
-            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-Regular.woff2') format('woff2'); 
-            font-display: swap;
+        /* 안드로이드 크롬/삼성인터넷 CORS 보안 우회 및 로드 보장 */
+        @import url('https://fastly.jsdelivr.net/jpg/vietnam-ttf/noonnu.css');
+
+        * { 
+            font-family: 'Paperlogy', 'Paperlogy-Regular', sans-serif !important; 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
         }
-        * { font-family: 'Paperlogy', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #f8fafc; padding: 40px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         #startLayer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .start-btn { background: #2563eb; color: white; padding: 25px 60px; border-radius: 20px; font-size: 2rem; border: none; cursor: pointer; font-weight: bold; box-shadow: 0 10px 30px rgba(37,99,235,0.3); }
@@ -79,7 +81,6 @@
         checkCallDynamic(); 
     }
 
-    // ⚡ 초고속 실시간 체킹 루프 (0.4초 딜레이 튜닝)
     async function checkCallDynamic() {
         try {
             const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
@@ -103,7 +104,6 @@
         document.getElementById('sPurp').innerText = d.purpose;
         card.classList.add('active');
 
-        // 🎹 고급 호텔 데스크 스타일의 청아하고 웅장한 "띵~동~" 사운드 주파수 생성 (볼륨 MAX)
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             const ctx = new AudioContext();
@@ -134,14 +134,13 @@
             };
 
             const now = ctx.currentTime;
-            playTone(1318.51, now, 0.8);        // 맑은 고음 "띵~"
-            playTone(880.00, now + 0.22, 1.0);  // 깊은 울림 저음 "동~"
+            playTone(1318.51, now, 0.8);        
+            playTone(880.00, now + 0.22, 1.0);  
 
         } catch (e) {
             console.log("오디오 생성 오류:", e);
         }
 
-        // 🗣️ TTS 출력 (0.65초 뒤 띵동 사운드와 자연스럽게 연계 및 변조 억제 고정 파라미터 적용)
         setTimeout(() => {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel(); 
