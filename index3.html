@@ -21,7 +21,7 @@
         input:focus, textarea:focus { border-color: #2563eb; }
         textarea { resize: none; font-size: 1rem; height: 80px; display: none; }
         
-        /* 🆕 메인 대문 스타일 */
+        /* 메인 홈 대문 스타일 */
         .welcome-box { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1; margin-top: 50px; }
         .welcome-title { font-size: 2.4rem; font-weight: 900; color: #1e293b; margin-bottom: 10px; background: linear-gradient(to right, #2563eb, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .welcome-author { font-size: 1.1rem; font-weight: bold; color: #1e293b; background: #e2e8f0; padding: 8px 20px; border-radius: 50px; margin-bottom: 35px; }
@@ -128,8 +128,6 @@
         document.querySelectorAll('.page').forEach(el => el.classList.remove('active')); 
         document.getElementById('page'+p).classList.add('active'); 
         if(p === 3) initSilentCamera();
-        
-        // 🔄 호출 완료 진입 시 5초 카운트다운 시작
         if(p === 4) startCountdown();
     }
     
@@ -249,7 +247,7 @@
         bar.style.width = "0%";
         holdBtn.classList.add('active-press');
         
-        // ⏳ 5000ms(5초) 타이머 증설 매칭 (인터벌당 1% 증가하도록 50ms 설정)
+        // 5초간 채워지도록 정밀 인터벌 세팅 (50ms 당 1%)
         pressTimer = setInterval(() => {
             progress += 1; 
             bar.style.width = progress + "%";
@@ -280,7 +278,6 @@
         } 
     }
 
-    // ⏳ 호출 완료 후 5초 카운트다운 자동 복귀 로직
     function startCountdown() {
         let sec = 5;
         const txt = document.getElementById('timerCountdown');
@@ -295,7 +292,7 @@
 
     function cleanReset() {
         if(autoFallbackTimer) clearInterval(autoFallbackTimer);
-        location.reload(); // 리로드 시 깨끗하게 page0(대문)으로 초기화 실행됨
+        location.reload();
     }
 
     holdBtn.addEventListener('mousedown', startPress);
