@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>교무실 호출 - 학생용</title>
+    <!-- 안드로이드 크롬 보안 프리패스 및 폰트 아카이브 정식 라이브러리 연동 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy.css" type="text/css"/>
     <style>
-        /* 안드로이드 크롬/삼성인터넷 CORS 보안 우회 및 로드 보장 */
-        @import url('https://fastly.jsdelivr.net/jpg/vietnam-ttf/noonnu.css');
-
         * { 
-            font-family: 'Paperlogy', 'Paperlogy-Regular', sans-serif !important; 
+            /* 폰트 파일명과 매핑되는 정확한 font-family 이름 강제 고정 */
+            font-family: 'Paperlogy', sans-serif !important; 
             box-sizing: border-box; 
             -webkit-tap-highlight-color: transparent; 
             user-select: none; 
@@ -19,7 +19,7 @@
         .page { display: none; flex-direction: column; height: 100%; flex: 1; }
         .page.active { display: flex; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; } to { transform: translateY(5px); opacity: 1; } }
-        h1 { font-size: 1.8rem; color: #1e293b; margin-bottom: 10px; }
+        h1 { font-size: 1.8rem; color: #1e293b; margin-bottom: 10px; font-weight: bold; }
         .subtitle { color: #64748b; margin-bottom: 25px; line-height: 1.5; font-size: 0.95rem; }
         .grid { display: grid; gap: 8px; margin-bottom: 20px; }
         .btn-opt { background: #f8fafc; border: 2px solid #e2e8f0; padding: 15px 5px; border-radius: 12px; cursor: pointer; text-align: center; font-weight: 600; color: #475569; transition: 0.2s; }
