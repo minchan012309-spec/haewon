@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy.css" type="text/css"/>
     <style>
         * { 
-            /* 폰트 파일명과 매핑되는 정확한 font-family 이름 강제 고정 */
             font-family: 'Paperlogy', sans-serif !important; 
             box-sizing: border-box; 
             -webkit-tap-highlight-color: transparent; 
@@ -69,7 +68,7 @@
     <div id="page1" class="page">
         <h1>선생님 선택</h1>
         <div class="subtitle">호출할 선생님을 선택해 주세요.</div>
-        <div class="grid" id="teacherGrid" style="grid-template-columns: repeat(3, 1fr);"></div>
+        <div class="grid" id="teacherGrid" style="grid-template-columns: repeat(3, 1fr); max-height: 280px; overflow-y: auto; padding: 5px; border: 1px solid #e2e8f0; border-radius: 12px;"></div>
         <button class="btn-opt" id="n1" disabled onclick="go(2)" style="margin-top:auto; background:#2563eb; color:white; border:none; padding:22px; border-radius:20px; font-size:1.2rem;">다음 단계</button>
     </div>
 
@@ -137,7 +136,8 @@
         if(p === 4) startCountdown();
     }
     
-    const teachers = ['김국어', '이수학', '박영어', '최과학', '정정보'];
+    // 가나다순 정렬된 선생님 명단 (총 11명)
+    const teachers = ['김선미', '김현민', '김지안', '방지수', '신주원', '안예슬', '유진선', '윤희연', '이희진', '진경훈', '최대한'];
     teachers.forEach(t => document.getElementById('teacherGrid').innerHTML += `<div class="btn-opt" onclick="sel('t','${t}')">${t}</div>`);
     for(let i=1; i<=10; i++) document.getElementById('classGrid').innerHTML += `<div class="btn-opt" onclick="sel('b','${i}')">${i}반</div>`;
     for(let i=1; i<=35; i++) document.getElementById('numGrid').innerHTML += `<div class="btn-opt" onclick="sel('n','${i}')">${i}번</div>`;
