@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>호출 대시보드 - 선생님용</title>
     <style>
-        @font-face { font-family: 'Paperlogy'; src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-Regular.woff2') format('woff2'); }
+        /* 갤탭(안드로이드) 차단 버그 해결용 정석 CDN 주소 적용 */
+        @font-face { 
+            font-family: 'Paperlogy'; 
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-Regular.woff2') format('woff2'); 
+            font-display: swap;
+        }
         * { font-family: 'Paperlogy', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #f8fafc; padding: 40px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         #startLayer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
@@ -43,7 +48,6 @@
     function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }
     setInterval(updateClock, 1000);
 
-    // 한국어 오디오 엔진 사전 매칭으로 변조 방지 패치
     function getBestKoVoice() {
         if (!('speechSynthesis' in window)) return;
         const voices = window.speechSynthesis.getVoices();
@@ -60,7 +64,6 @@
         document.getElementById('startLayer').style.display = 'none';
         getBestKoVoice();
         
-        // 오디오 초기 권한 잠금 해제용 무음 가동
         const initialSilent = new Audio('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg');
         initialSilent.volume = 0;
         initialSilent.play().catch(e => console.log(e));
