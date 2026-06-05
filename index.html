@@ -2,308 +2,134 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>교무실 호출 - 학생용</title>
-    <!-- 안드로이드 크롬 보안 프리패스 및 폰트 아카이브 정식 라브러리 연동 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>교무실 학생 호출 패드</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy.css" type="text/css"/>
     <style>
-        * { 
-            font-family: 'Paperlogy', sans-serif !important; 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
-            user-select: none; 
-        }
-        body { margin: 0; padding: 20px; background-color: #f1f5f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { background: white; padding: 30px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 100%; max-width: 600px; min-height: 700px; display: flex; flex-direction: column; position: relative; }
-        .page { display: none; flex-direction: column; height: 100%; flex: 1; }
-        .page.active { display: flex; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { transform: translateY(5px); opacity: 1; } }
-        h1 { font-size: 1.8rem; color: #1e293b; margin-bottom: 10px; font-weight: bold; }
-        .subtitle { color: #64748b; margin-bottom: 25px; line-height: 1.5; font-size: 0.95rem; }
-        .grid { display: grid; gap: 8px; margin-bottom: 20px; }
-        .btn-opt { background: #f8fafc; border: 2px solid #e2e8f0; padding: 15px 5px; border-radius: 12px; cursor: pointer; text-align: center; font-weight: 600; color: #475569; transition: 0.2s; }
-        .btn-opt.selected { background: #eff6ff; border-color: #2563eb; color: #2563eb; }
-        input, textarea { width: 100%; padding: 16px; border: 2px solid #e2e8f0; border-radius: 15px; font-size: 1.1rem; margin-bottom: 15px; outline: none; transition: 0.2s; }
-        input:focus, textarea:focus { border-color: #2563eb; }
-        textarea { resize: none; font-size: 1rem; height: 80px; display: none; }
+        * { font-family: 'Paperlogy', sans-serif !important; margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f1f5f9; padding: 30px; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; }
         
-        .welcome-box { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1; margin-top: 50px; }
-        .welcome-title { font-size: 2.4rem; font-weight: 900; color: #1e293b; margin-bottom: 10px; background: linear-gradient(to right, #2563eb, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .welcome-author { font-size: 1.1rem; font-weight: bold; color: #1e293b; background: #e2e8f0; padding: 8px 20px; border-radius: 50px; margin-bottom: 35px; }
-        .welcome-desc { color: #64748b; font-size: 1.1rem; line-height: 1.6; }
-
-        .agreement-box { background: #fff1f2; border: 2px solid #ffe4e6; padding: 20px; border-radius: 18px; margin-bottom: 25px; color: #9f1239; font-size: 0.9rem; line-height: 1.6; }
-        .agreement-box ul { margin: 8px 0 0 0; padding-left: 20px; }
-        .chk-container { display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 25px; font-weight: bold; color: #1e293b; font-size: 1.05rem; }
-        .chk-container input[type="checkbox"] { width: 22px; height: 22px; margin: 0; cursor: pointer; }
-
-        .long-press-area { position: relative; width: 100%; height: 80px; border-radius: 20px; background: #e2e8f0; overflow: hidden; cursor: pointer; margin-top: auto; }
-        .progress-bar { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: #2563eb; transition: none; }
-        .press-btn-text { position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: bold; color: #64748b; z-index: 2; pointer-events: none; }
-        .long-press-area.active-press .press-btn-text { color: white; }
-        .long-press-area.disabled { background: #f1f5f9; cursor: not-allowed; opacity: 0.5; }
+        .container { background: white; width: 100%; max-width: 800px; padding: 40px; border-radius: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.05); text-align: center; }
+        h1 { color: #1e3a8a; margin-bottom: 20px; font-size: 2.5rem; font-weight: 900; }
+        p { color: #64748b; font-size: 1.2rem; margin-bottom: 30px; }
         
-        .toss-check-container { width: 120px; height: 120px; margin: 40px auto 30px; position: relative; }
-        .circular-loader { width: 120px; height: 120px; stroke: #2563eb; stroke-width: 6; fill: none; stroke-dasharray: 283; stroke-dashoffset: 283; animation: loader-spin 1.0s cubic-bezier(0.4, 0, 0.2, 1) forwards; transform-origin: 50% 50%; transform: rotate(-90deg); }
-        .check-path { stroke: #2563eb; stroke-width: 8; stroke-linecap: round; fill: none; stroke-dasharray: 70; stroke-dashoffset: 70; animation: checkmark-draw 0.5s 0.7s cubic-bezier(0.65, 0, 0.45, 1) forwards; }
-        @keyframes loader-spin { 100% { stroke-dashoffset: 0; transform: rotate(270deg); } }
-        @keyframes checkmark-draw { 100% { stroke-dashoffset: 0; } }
-        #holdingOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.9); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        /* 기존 입력 및 카메라 로직 디자인 생략 (민찬이 기존 UI에 맞춰 자유롭게 사용하면 돼) */
+        .mock-app { font-size: 1.5rem; font-weight: bold; padding: 50px; background: #f8fafc; border-radius: 20px; border: 2px dashed #cbd5e0; margin-bottom: 20px; }
         
-        #hiddenVideo, #hiddenCanvas { display: none; }
+        /* 🚨 [추가] 부재중 팝업 전체 화면 오버레이 레이어 */
+        #absentOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ef4444; z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; padding: 40px; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .absent-title { font-size: 4.5rem; font-weight: 900; margin-bottom: 20px; text-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .absent-subtitle { font-size: 2.5rem; font-weight: bold; line-height: 1.5; opacity: 0.95; }
+        
+        /* 🏠 [추가] 고정형 플로팅 홈 버튼 스타일 */
+        .home-btn { background: #1e293b; color: white; padding: 18px 35px; border-radius: 50px; font-size: 1.3rem; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: all 0.2s; }
+        .home-btn:hover { transform: translateY(-3px); background: #0f172a; }
+        
+        /* 부재중 레이어 안의 홈버튼 위치 고정 */
+        .absent-home-pos { position: absolute; bottom: 50px; right: 50px; background: white !important; color: #ef4444 !important; font-size: 1.6rem !important; padding: 22px 45px !important; }
     </style>
 </head>
 <body>
-<div class="container">
-    <div id="page0" class="page active">
-        <div class="welcome-box">
-            <div class="welcome-title">교무실 호출벨 시스템</div>
-            <div class="welcome-author">20216 김민찬 제작</div>
-            <div class="welcome-desc">본 시스템은 교무실에 계신 선생님을</div>
-            <div class="welcome-desc" style="margin-bottom: 50px;">실시간으로 안전하고 빠르게 호출하는 통합 벨입니다.</div>
-        </div>
-        <button class="btn-opt" onclick="go(1)" style="background:#2563eb; color:white; border:none; padding:22px; border-radius:20px; font-size:1.3rem; font-weight:bold; width:100%;">선생님 호출하기</button>
-    </div>
 
-    <div id="page1" class="page">
-        <h1>선생님 선택</h1>
-        <div class="subtitle">호출할 선생님을 선택해 주세요.</div>
-        <div class="grid" id="teacherGrid" style="grid-template-columns: repeat(3, 1fr); max-height: 280px; overflow-y: auto; padding: 5px; border: 1px solid #e2e8f0; border-radius: 12px;"></div>
-        <button class="btn-opt" id="n1" disabled onclick="go(2)" style="margin-top:auto; background:#2563eb; color:white; border:none; padding:22px; border-radius:20px; font-size:1.2rem;">다음 단계</button>
-    </div>
-
-    <div id="page2" class="page">
-        <h1>정보 입력</h1>
-        <div class="subtitle">본인의 정보와 호출 목적을 정확히 입력해 주세요.</div>
-        <div class="grid" id="classGrid" style="grid-template-columns: repeat(5, 1fr);"></div>
-        <div class="grid" id="numGrid" style="grid-template-columns: repeat(6, 1fr); max-height: 140px; overflow-y: auto; padding: 5px; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 15px;"></div>
-        <input type="text" id="nameInp" placeholder="이름 입력" oninput="val2()">
-        <div class="grid" id="purposeGrid" style="grid-template-columns: repeat(4, 1fr);"></div>
-        <textarea id="customPurpose" placeholder="기타 사유를 입력하세요 (최대 30자)" maxlength="30" oninput="val2()"></textarea>
-        <button class="btn-opt" id="n2" disabled onclick="go(3)" style="margin-top:auto; background:#2563eb; color:white; border:none; padding:22px; border-radius:20px; font-size:1.2rem;">다음 단계</button>
-    </div>
-
-    <div id="page3" class="page">
-        <h1>개인정보 동의 및 전송</h1>
-        <div class="subtitle">안전한 서비스 운영과 악의적인 허위 호출(벨튀) 방지를 위해 아래 조항에 동의가 필요합니다.</div>
-        
-        <div class="agreement-box">
-            <strong>[허위 호출 방지 및 불이익 안내]</strong>
-            <ul>
-                <li>본 시스템은 교무실 대시보드와 실시간 연동됩니다.</li>
-                <li>허위 호출 예방을 위해 동의 시 <strong>전면 카메라 촬영</strong>이 진행될 수 있습니다.</li>
-                <li>오작동 및 사고 발생 시 수집된 정보가 활용될 수 있습니다.</li>
-                <li>의도적인 벨튀 적발 시 학칙에 따라 <strong>징계 처분</strong>을 받을 수 있습니다.</li>
-            </ul>
-        </div>
-
-        <label class="chk-container">
-            <input type="checkbox" id="agreeChk" onchange="val3()">
-            위 조항을 숙지하였으며, 이에 동의합니다.
-        </label>
-
-        <div class="long-press-area disabled" id="longPressBtn">
-            <div class="progress-bar" id="progressBar"></div>
-            <div class="press-btn-text" id="btnText">5초간 꾹 눌러 호출 버튼</div>
-        </div>
-    </div>
-
-    <div id="page4" class="page" style="text-align:center; justify-content:center;">
-        <div class="toss-check-container"><svg viewBox="0 0 100 100"><circle class="circular-loader" cx="50" cy="50" r="45"/><path class="check-path" d="M30 50 L45 65 L70 35"/></svg></div>
-        <h1>호출 완료</h1>
-        <div class="subtitle" style="text-align: center;"><span id="timerCountdown" style="color:#2563eb; font-weight:bold;">5초</span> 뒤 자동으로 메인 화면으로 이동합니다.<br>선생님께 정보가 실시간으로 전달되었습니다.</div>
-        <button onclick="cleanReset()" style="background:#f1f5f9; border:none; padding:18px 40px; border-radius:18px; color:#4a5568; font-weight:bold; cursor:pointer; margin-top: 20px;">처음으로</button>
+<div class="container" id="mainContainer">
+    <h1>교무실 선생님 호출 시스템</h1>
+    <p>정보를 입력하고 벨을 눌러 선생님을 호출하세요.</p>
+    
+    <div class="mock-app">벨 및 카메라 입력 패널 영역</div>
+    
+    <div style="position: absolute; bottom: 30px; right: 30px;">
+        <button class="home-btn" onclick="resetToHome()">🏠 홈 화면</button>
     </div>
 </div>
 
-<div id="holdingOverlay"><h1 style="color:#2563eb;">처리 중...</h1></div>
-
-<video id="hiddenVideo" autoplay playsinline muted style="width:1px; height:1px; opacity:0.01; position:absolute;"></video>
-<canvas id="hiddenCanvas" width="480" height="640" style="display:none;"></canvas>
+<div id="absentOverlay">
+    <div class="absent-title">⚠️ 선생님 부재중</div>
+    <div class="absent-subtitle" id="absentMsg">요청하신 선생님은<br>현재 자리에 계시지 않습니다.</div>
+    
+    <button class="home-btn absent-home-pos" onclick="resetToHome()">🏠 홈으로 돌아가기</button>
+</div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwCQ27o8Upqed4lMyPpiqymy8-XXJOLOwS9LPQkiFONG_iXEHwBOGYd15pBziEkNNqsTQ/exec"; 
-    
-    let data = { t:'', b:'', n:'', name:'', p:'', customP:'', img:'' };
-    let videoStream = null;
-    let isSubmitted = false;
-    let autoFallbackTimer = null;
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzceRMZQbhlKGkLxM1yxCNRJ61HKOs0HbxAe7RXCeRjbw05gJoTnmm6UdW2xB-9rzoh9g/exec";
+    let lastAbsentTime = 0;
+    let koVoice = null;
 
-    function go(p) { 
-        document.querySelectorAll('.page').forEach(el => el.classList.remove('active')); 
-        document.getElementById('page'+p).classList.add('active'); 
-        if(p === 3) initSilentCamera();
-        if(p === 4) startCountdown();
+    // 한국어 TTS 보이스 장착
+    function getBestKoVoice() {
+        if (!('speechSynthesis' in window)) return;
+        const voices = window.speechSynthesis.getVoices();
+        koVoice = voices.find(v => v.lang.includes('ko') && v.name.includes('Google')) || 
+                  voices.find(v => v.lang.includes('ko') && v.name.includes('Natural')) ||
+                  voices.find(v => v.lang.includes('ko'));
     }
-    
-    // 가나다순 정렬된 선생님 명단 (총 11명)
-    const teachers = ['김선미', '김현민', '김지안', '방지수', '신주원', '안예슬', '유진선', '윤희연', '이희진', '진경훈', '최대한'];
-    teachers.forEach(t => document.getElementById('teacherGrid').innerHTML += `<div class="btn-opt" onclick="sel('t','${t}')">${t}</div>`);
-    for(let i=1; i<=10; i++) document.getElementById('classGrid').innerHTML += `<div class="btn-opt" onclick="sel('b','${i}')">${i}반</div>`;
-    for(let i=1; i<=35; i++) document.getElementById('numGrid').innerHTML += `<div class="btn-opt" onclick="sel('n','${i}')">${i}번</div>`;
-    ['질문', '제출', '상담', '기타'].forEach(p => document.getElementById('purposeGrid').innerHTML += `<div class="btn-opt" onclick="sel('p','${p}')">${p}</div>`);
-
-    function sel(k, v) { 
-        event.target.parentElement.querySelectorAll('.btn-opt').forEach(b => b.classList.remove('selected'));
-        event.target.classList.add('selected');
-        data[k] = v;
-        if(k==='t') document.getElementById('n1').disabled = false;
-        
-        if(k==='p') {
-            const customBox = document.getElementById('customPurpose');
-            if(v === '기타') {
-                customBox.style.display = 'block';
-            } else {
-                customBox.style.display = 'none';
-                customBox.value = '';
-                data.customP = '';
-            }
-        }
-        val2();
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = getBestKoVoice;
+        getBestKoVoice();
     }
 
-    function val2() {
-        data.name = document.getElementById('nameInp').value.trim();
-        data.customP = document.getElementById('customPurpose').value.trim();
-        let purposeOk = data.p && (data.p !== '기타' || data.customP.length > 0);
-        const ok = data.b && data.n && data.name && purposeOk;
-        document.getElementById('n2').disabled = !ok;
-    }
-
-    function val3() {
-        const chk = document.getElementById('agreeChk');
-        const btn = document.getElementById('longPressBtn');
-        const sid = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
-        
-        if(chk.checked) {
-            if (localStorage.getItem('lc_'+sid) && new Date().getTime() - localStorage.getItem('lc_'+sid) < 600000) {
-                alert("10분 뒤 재호출 가능합니다.");
-                chk.checked = false;
-                btn.classList.add('disabled');
-                return;
-            }
-            btn.classList.remove('disabled');
-        } else {
-            btn.classList.add('disabled');
-        }
-    }
-
-    async function initSilentCamera() {
-        try {
-            if(!videoStream) {
-                videoStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user", width: 480, height: 640 },
-                    audio: false
-                });
-                const video = document.getElementById('hiddenVideo');
-                video.srcObject = videoStream;
-                video.play().catch(e => console.log(e));
-            }
-        } catch (e) { console.log("카메라 초기화 대기:", e); }
-    }
-
-    function takeSilentSnapshot() {
-        const video = document.getElementById('hiddenVideo');
-        const canvas = document.getElementById('hiddenCanvas');
-        if (videoStream && video.readyState === video.HAVE_ENOUGH_DATA) {
-            const ctx = canvas.getContext('2d');
-            ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            data.img = canvas.toDataURL('image/jpeg', 0.45).split(',')[1];
-        }
-    }
-
-    function executeSubmit(id) {
-        const finalPurpose = data.p === '기타' ? `기타(${data.customP})` : data.p;
-        localStorage.setItem('lc_'+id, new Date().getTime());
-
-        const payload = {
-            teacher: data.t,
-            id: id,
-            name: data.name,
-            purpose: finalPurpose, 
-            image: data.img 
-        };
-
-        fetch(GAS_URL, { 
-            method: "POST", 
-            mode: 'no-cors', 
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload) 
-        }).catch(err => console.log(err));
-    }
-
-    let pressTimer = null, progress = 0;
-    const holdBtn = document.getElementById('longPressBtn'), bar = document.getElementById('progressBar');
-
-    function startPress(e) {
-        if(e) e.preventDefault();
-        if(holdBtn.classList.contains('disabled')) return;
-        
-        const sid = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
-
-        if (!isSubmitted) {
-            isSubmitted = true;
-            takeSilentSnapshot(); 
-            executeSubmit(sid);   
-        }
-
-        progress = 0;
-        bar.style.width = "0%";
-        holdBtn.classList.add('active-press');
-        
-        pressTimer = setInterval(() => {
-            progress += 1; 
-            bar.style.width = progress + "%";
-            
-            if(progress >= 100) { 
-                clearInterval(pressTimer); 
-                document.getElementById('holdingOverlay').style.display = 'flex';
+    // 💡 부재중 신호 무한 반복 모니터링 루프 루틴 시작
+    function startAbsentCheckLoop() {
+        setInterval(async () => {
+            try {
+                const res = await fetch(`${GAS_URL}?type=check_absent&v=${Date.now()}`);
+                const d = await res.json();
                 
-                if(videoStream) {
-                    videoStream.getTracks().forEach(track => track.stop());
-                    videoStream = null;
+                if (d && d.type === "ABSENT_ALERT" && Number(d.timestamp) > lastAbsentTime) {
+                    lastAbsentTime = Number(d.timestamp);
+                    triggerAbsentScreen(d.teacher);
                 }
-                
-                setTimeout(() => { 
-                    document.getElementById('holdingOverlay').style.display = 'none'; 
-                    go(4); 
-                }, 800);
+            } catch(e) { console.log("체크 루프 대기..."); }
+        }, 500); // 0.5초 주기로 기민하게 감지
+    }
+    window.onload = startAbsentCheckLoop;
+
+    // 🚨 부재중 스크린 활성화 + 안내음성 표출
+    function triggerAbsentScreen(teacherName) {
+        const overlay = document.getElementById('absentOverlay');
+        document.getElementById('absentMsg').innerHTML = `<span style="font-size:3.5rem; font-weight:900; background:rgba(0,0,0,0.2); padding:5px 15px; border-radius:10px;">${teacherName}</span> 선생님은<br>현재 부재중이십니다.`;
+        overlay.style.display = "flex";
+
+        // 부재중 경고 전용 사이렌 톤 이펙트 효과음
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            const ctx = new AudioContext();
+            const now = ctx.currentTime;
+            const playAlert = (freq, time) => {
+                const osc = ctx.createOscillator(); const gain = ctx.createGain();
+                osc.type = 'sine'; osc.frequency.setValueAtTime(freq, time);
+                gain.gain.setValueAtTime(0, time); gain.gain.linearRampToValueAtTime(0.5, time + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(time); osc.stop(time + 0.4);
+            };
+            playAlert(523.25, now); playAlert(523.25, now + 0.15); // 도-도 더블 탭 비프
+        } catch(e) {}
+
+        // 부재중 인지용 전용 고속 고볼륨 TTS 안내 멘트 출력
+        setTimeout(() => {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const uttr = new SpeechSynthesisUtterance(`${teacherName} 선생님은 현재 부재중이십니다.`);
+                if(koVoice) uttr.voice = koVoice;
+                uttr.lang = 'ko-KR'; uttr.rate = 1.1; uttr.volume = 1.0;
+                window.speechSynthesis.speak(uttr);
             }
-        }, 50);
+        }, 450);
     }
 
-    function endPress() { 
-        clearInterval(pressTimer); 
-        holdBtn.classList.remove('active-press'); 
-        if(progress < 100) { 
-            progress = 0; 
-            bar.style.width = "0%"; 
-        } 
+    // 🏠 홈 버튼 동작 기능 (리셋용)
+    function resetToHome() {
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        
+        // 부재중 화면 숨기기
+        document.getElementById('absentOverlay').style.display = "none";
+        
+        // 민찬이 폼 페이지에 들어있는 입력값 인풋태그 리셋 로직 필요 시 여기에 추가
+        // 예: document.getElementById('studentIdInput').value = "";
+        
+        console.log("홈 화면으로 안전하게 초기화되었습니다.");
     }
-
-    function startCountdown() {
-        let sec = 5;
-        const txt = document.getElementById('timerCountdown');
-        autoFallbackTimer = setInterval(() => {
-            sec--;
-            txt.innerText = sec + "초";
-            if(sec <= 0) {
-                cleanReset();
-            }
-        }, 1000);
-    }
-
-    function cleanReset() {
-        if(autoFallbackTimer) clearInterval(autoFallbackTimer);
-        location.reload();
-    }
-
-    holdBtn.addEventListener('mousedown', startPress);
-    holdBtn.addEventListener('touchstart', startPress);
-    window.addEventListener('mouseup', endPress); 
-    window.addEventListener('touchend', endPress);
 </script>
 </body>
 </html>
