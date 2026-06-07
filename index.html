@@ -12,7 +12,7 @@
             -webkit-tap-highlight-color: transparent; 
             user-select: none; 
         }
-        body { margin: 0; padding: 20px; background-color: #f1f5f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        body { margin: 0; padding: 20px; background-color: #f1f5f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; position: relative; }
         .container { background: white; padding: 30px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 100%; max-width: 600px; min-height: 700px; display: flex; flex-direction: column; position: relative; }
         .page { display: none; flex-direction: column; height: 100%; flex: 1; }
         .page.active { display: flex; animation: fadeIn 0.3s ease; }
@@ -51,7 +51,6 @@
         
         #hiddenVideo, #hiddenCanvas { display: none; }
 
-        /* 부재중 레이어의 z-index 상향 최적화 */
         #absentOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #dc2626; z-index: 99999; display: none; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; padding: 30px; animation: absentFade 0.3s ease; }
         @keyframes absentFade { from { opacity: 0; } to { opacity: 1; } }
         .absent-title { font-size: 3.5rem; font-weight: 900; margin-bottom: 15px; text-shadow: 0 4px 10px rgba(0,0,0,0.15); }
@@ -60,10 +59,32 @@
         .bottom-home-btn { background: #f1f5f9; border: none; padding: 18px; border-radius: 18px; color: #475569; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-top: 15px; width: 100%; transition: 0.2s; text-align: center; }
         .bottom-home-btn:hover { background: #e2e8f0; }
         .absent-home-pos { background: white !important; color: #dc2626 !important; font-size: 1.3rem !important; padding: 20px 50px !important; width: auto !important; border-radius: 50px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.2); pointer-events: auto !important; position: relative; z-index: 100000; }
+
+        /* ⚙️ 우측 상단 레이아웃 설정 버튼 UI */
+        .settings-btn { position: absolute; top: 25px; right: 25px; background: #f1f5f9; border: none; padding: 10px 16px; border-radius: 12px; color: #475569; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; z-index: 500; }
+        .settings-btn:hover { background: #e2e8f0; color: #1e293b; }
+
+        /* 🔒 관리자용 테스트 모달 패널 및 키패드 구조 */
+        #adminModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 1000000; display: none; justify-content: center; align-items: center; padding: 20px; }
+        .admin-box { background: white; border-radius: 24px; padding: 30px; width: 100%; max-width: 360px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); text-align: center; animation: modalUp 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes modalUp { from { transform: scale(0.9) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+        
+        .pin-display { font-size: 2rem; font-weight: bold; letter-spacing: 10px; margin: 15px 0; color: #1e293b; height: 40px; }
+        .pad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+        .pad-btn { background: #f1f5f9; border: none; padding: 18px 0; border-radius: 14px; font-size: 1.4rem; font-weight: bold; color: #334155; cursor: pointer; transition: 0.1s; }
+        .pad-btn:active { background: #cbd5e1; }
+        .pad-btn.danger { background: #fee2e2; color: #ef4444; }
+        .pad-btn.danger:active { background: #fca5a5; }
+
+        .confirm-btn-box { display: flex; gap: 10px; margin-top: 20px; }
+        .conf-btn { flex: 1; padding: 16px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
+
 <div class="container">
+    <button class="settings-btn" onclick="openAdmin()">⚙️ 설정</button>
+
     <div id="page0" class="page active">
         <div class="welcome-box">
             <div class="welcome-title">교무실 호출벨 시스템</div>
@@ -136,11 +157,48 @@
     <button class="bottom-home-btn absent-home-pos" onclick="cleanReset()">🏠 홈 화면으로 이동</button>
 </div>
 
+<div id="adminModal">
+    <div class="admin-box" id="stepPin">
+        <h2 style="margin:0; color:#1e293b; font-size:1.4rem;">관리자 인증</h2>
+        <div class="subtitle" style="margin-bottom:10px;">비밀번호 4자리를 입력하세요.</div>
+        <div class="pin-display" id="pinStars"></div>
+        <div class="pad-grid">
+            <button class="pad-btn" onclick="pressPin('1')">1</button>
+            <button class="pad-btn" onclick="pressPin('2')">2</button>
+            <button class="pad-btn" onclick="pressPin('3')">3</button>
+            <button class="pad-btn" onclick="pressPin('4')">4</button>
+            <button class="pad-btn" onclick="pressPin('5')">5</button>
+            <button class="pad-btn" onclick="pressPin('6')">6</button>
+            <button class="pad-btn" onclick="pressPin('7')">7</button>
+            <button class="pad-btn" onclick="pressPin('8')">8</button>
+            <button class="pad-btn" onclick="pressPin('9')">9</button>
+            <button class="pad-btn danger" onclick="clearPin()">C</button>
+            <button class="pad-btn" onclick="pressPin('0')">0</button>
+            <button class="pad-btn" style="background:#e2e8f0; font-size:1rem;" onclick="closeAdmin()">닫기</button>
+        </div>
+    </div>
+    
+    <div class="admin-box" id="stepConfirm" style="display:none;">
+        <h2 style="margin:0; color:#2563eb; font-size:1.5rem;">⚙️ 테스트 시스템</h2>
+        <div class="subtitle" style="margin:15px 0 25px 0; font-size:1.1rem; line-height:1.5; color:#334155;">
+            대시보드로 원격 <strong>[테스트 알림]</strong>을<br>전송하시겠습니까?
+        </div>
+        <div style="text-align:left; background:#f8fafc; padding:12px; border-radius:8px; font-size:0.85rem; color:#64748b; margin-bottom:15px;">
+            • 대상 교사: 선택된 교사 (또는 김선미 교사)<br>
+            • 전송 정보: 21145 테스트
+        </div>
+        <div class="confirm-btn-box">
+            <button class="conf-btn" style="background:#f1f5f9; color:#475569;" onclick="closeAdmin()">아니오</button>
+            <button class="conf-btn" style="background:#2563eb; color:white;" onclick="sendTestCall()">예</button>
+        </div>
+    </div>
+</div>
+
 <video id="hiddenVideo" autoplay playsinline muted style="width:1px; height:1px; opacity:0.01; position:absolute;"></video>
 <canvas id="hiddenCanvas" width="480" height="640" style="display:none;"></canvas>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwQd_Y-13sGimR7bW8lFsH1PKYTPD3AYv9eB-9DbKEW5qvnx7Ec0XatMwKOnje-eR9Jsg/exec"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbymAMka5LCDljjstXphO4Q_GF1NKx_4RZpKLS8w-2SNVqzf2G_ie4uJnabQTJWKBA4O2A/exec"; 
     
     let data = { t:'', b:'', n:'', name:'', p:'', customP:'', img:'' };
     let videoStream = null;
@@ -149,6 +207,65 @@
     let absentAutoTimer = null; 
     let lastAbsentTime = 0; 
     let koVoice = null;
+
+    // 🔒 관리자 제어 변수
+    let inputtedPin = "";
+
+    function openAdmin() {
+        clearPin();
+        document.getElementById('stepPin').style.display = 'block';
+        document.getElementById('stepConfirm').style.display = 'none';
+        document.getElementById('adminModal').style.display = 'flex';
+    }
+
+    function closeAdmin() {
+        document.getElementById('adminModal').style.display = 'none';
+        clearPin();
+    }
+
+    function pressPin(num) {
+        if(inputtedPin.length >= 4) return;
+        inputtedPin += num;
+        document.getElementById('pinStars').innerText = "• ".repeat(inputtedPin.length);
+        
+        if(inputtedPin.length === 4) {
+            setTimeout(() => {
+                if(inputtedPin === "1837") { // 🔒 마스터 코드 검증
+                    document.getElementById('stepPin').style.display = 'none';
+                    document.getElementById('stepConfirm').style.display = 'block';
+                } else {
+                    alert("비밀번호가 올바르지 않습니다.");
+                    clearPin();
+                }
+            }, 150);
+        }
+    }
+
+    function clearPin() {
+        inputtedPin = "";
+        document.getElementById('pinStars').innerText = "";
+    }
+
+    function sendTestCall() {
+        const testTeacher = data.t || '김선미'; 
+        const payload = {
+            teacher: testTeacher,
+            id: "21145",            // 📌 11반 45번 커스텀 ID 세팅
+            name: "테스트",         // 📌 이름 매핑
+            purpose: "시스템 테스트",
+            image: ""
+        };
+
+        fetch(GAS_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+        }).catch(e => console.log(e));
+
+        closeAdmin();
+        alert(`[${testTeacher} 선생님]께 테스트 호출 신호(11반 45번 테스트)를 전송했습니다!`);
+    }
 
     function go(p) { 
         document.querySelectorAll('.page').forEach(el => el.classList.remove('active')); 
@@ -315,7 +432,6 @@
         }, 1000);
     }
 
-    // 💡 [버그수정] 비동기 처리 완료를 확실히 보장하고 무조건 홈으로 탈출하는 동기화 복구 로직
     async function cleanReset() {
         if(autoFallbackTimer) clearInterval(autoFallbackTimer);
         if(absentAutoTimer) clearTimeout(absentAutoTimer);
@@ -323,14 +439,12 @@
         
         const payload = JSON.stringify({ type: "clear_absent" });
         
-        // 브라우저 튕김 차단용 안전장치 1순위: sendBeacon API 자동 연동
         if (navigator.sendBeacon) {
             navigator.sendBeacon(GAS_URL, payload);
             location.reload();
             return;
         }
 
-        // 백업 안전장치 2순위: async-await 비동기 동합 제어 구조
         try {
             await fetch(GAS_URL, {
                 method: "POST",
@@ -373,7 +487,6 @@
         document.getElementById('absentMsg').innerHTML = `<span style="font-size:2.8rem; font-weight:900; background:rgba(0,0,0,0.2); padding:4px 15px; border-radius:12px;">${teacherName}</span> 선생님은<br>현재 부재중이십니다.`;
         overlay.style.display = "flex";
 
-        // 🔊 [음량조정] 패드 부재중 알림 비프음 볼륨 가속 강화 (0.4 -> 0.9)
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             const ctx = new AudioContext();
@@ -382,12 +495,11 @@
                 const osc = ctx.createOscillator(); const gain = ctx.createGain();
                 osc.type = 'sine'; osc.frequency.setValueAtTime(freq, time);
                 gain.gain.setValueAtTime(0, time); 
-                gain.gain.linearRampToValueAtTime(0.9, time + 0.05); // 명확하게 들리도록 볼륨 대폭 증가
+                gain.gain.linearRampToValueAtTime(0.9, time + 0.05); 
                 gain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
                 osc.connect(gain); gain.connect(ctx.destination);
                 osc.start(time); osc.stop(time + 0.4);
             };
-            // 강한 경보 경고음 2연타 출력
             playTone(698.46, now); playTone(698.46, now + 0.15); 
         } catch(e) {}
 
@@ -399,11 +511,10 @@
                 uttr.lang = 'ko-KR'; 
                 uttr.rate = 1.05;
                 
-                // 🗣️ 부재중 음성 안내 TTS가 완전히 끝나면 자동으로 닫히는 트리거 이벤트 리스너
                 uttr.onend = function() {
                     absentAutoTimer = setTimeout(() => {
                         cleanReset();
-                    }, 500); // TTS 끝난 후 0.5초 대기 후 깔끔하게 메인 홈으로 자동 자동 복구
+                    }, 500); 
                 };
                 
                 window.speechSynthesis.speak(uttr);
