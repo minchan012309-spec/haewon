@@ -284,6 +284,7 @@
         alert(`[${testTeacher} 선생님]께 테스트 호출 신호(11반 45번 테스트)를 전송했습니다!`);
     }
 
+    // 📋 [로그 뷰어 비동기 CORS 런타임 픽스]
     async function toggleLogViewer() {
         const viewer = document.getElementById('logViewer');
         if(viewer.style.display === 'block') {
@@ -295,8 +296,10 @@
         viewer.style.display = 'block';
 
         try {
+            // CORS 에러와 데이터 가로챔 방지를 위해 텍스트 스트림 형태로 변환 후 가공
             const res = await fetch(`${GAS_URL}?type=get_calls&v=${Date.now()}`);
-            let d = await res.json();
+            const textData = await res.text();
+            let d = JSON.parse(textData);
             
             if(d && !Array.isArray(d)) {
                 if(d.name) { d = [d]; } else { d = []; }
@@ -334,6 +337,7 @@
                 viewer.innerHTML = "<div style='text-align:center; padding:10px; color:#94a3b8;'>최근 전송 이력이 비어있습니다.</div>";
             }
         } catch(e) {
+            console.error(e);
             if(systemLogCache.length > 0) {
                 let html = '';
                 systemLogCache.slice(0, 5).forEach((log, index) => {
@@ -568,20 +572,23 @@
         getBestKoVoice();
     }
 
-    // 📡 [부재중 연동 감지 완벽 픽스 엔진] 재귀형 안정 구동 폴링 레이어
+    // 📡 [부재중 폴링 루프 인터럽트 안전화 차단 해제]
     async function checkAbsentSignalLoop() {
         try {
             const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
-            const d = await res.json();
+            const textData = await res.text();
+            let d = JSON.parse(textData);
             
-            // 🚨 백엔드 구조 유연화 매핑: type 필드가 absent이거나, purpose 목적이 '부재중'인 조건 모두 잡음
             if (d && (d.type === "absent" || d.purpose === "부재중" || d.type === "ABSENT_ALERT") && d.teacher) {
                 triggerAbsentScreen(d.teacher);
-                return; // 팝업창 실행 시 루프 잠시 정지
+                return; // 부재중 화면 전환 시 루프 정지
             }
-        } catch(e) { console.log("부재중 동기화 대기 중..."); }
+        } catch(e) { 
+            console.log("부재중 시그널 대기 피드백 처리 중..."); 
+        }
         
-        setTimeout(checkAbsentSignalLoop, 500); // 0.5초 주기로 재귀 안전 호출
+        // 에러가 나든 처리가 안 되든 무조건 800ms 뒤 다음 루프 체인을 강제 재생성하여 루프가 끊기는 현상 차단
+        setTimeout(checkAbsentSignalLoop, 800);
     }
 
     function triggerAbsentScreen(teacherName) {
@@ -622,7 +629,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-        checkAbsentSignalLoop(); // 루프 시작 실행
+        checkAbsentSignalLoop();
     });
 
     holdBtn.addEventListener('mousedown', startPress);
