@@ -128,8 +128,8 @@
                 // 1. 첫 번째 고음 톤: '딩' (주파수 880Hz)
                 const osc1 = ctx.createOscillator();
                 const gain1 = ctx.createGain();
-                osc1.type = 'sine';
-                osc1.frequency.setValueAtTime(880, now);
+                osc1.type = 'square';
+                osc1.frequency.setValueAtTime(1200, now);
                 
                 // 볼륨 감쇠 계수를 크게 보정하여 시끄러운 교무실에서도 선명히 들리도록 튜닝
                 gain1.gain.setValueAtTime(0, now);
@@ -142,8 +142,8 @@
                 // 2. 두 번째 하향 톤: '동' (주파수 554.37Hz, 0.22초 뒤 발생)
                 const osc2 = ctx.createOscillator();
                 const gain2 = ctx.createGain();
-                osc2.type = 'sine';
-                osc2.frequency.setValueAtTime(554.37, now + 0.22);
+                osc2.type = 'square';
+                osc2.frequency.setValueAtTime(880, now + 0.22);
                 
                 gain2.gain.setValueAtTime(0, now + 0.22);
                 gain2.gain.linearRampToValueAtTime(1.4, now + 0.24);
