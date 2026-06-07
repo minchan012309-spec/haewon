@@ -51,14 +51,15 @@
         
         #hiddenVideo, #hiddenCanvas { display: none; }
 
-        #absentOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #dc2626; z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; padding: 30px; animation: absentFade 0.3s ease; }
+        /* 부재중 레이어의 z-index 상향 최적화 */
+        #absentOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #dc2626; z-index: 99999; display: none; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; padding: 30px; animation: absentFade 0.3s ease; }
         @keyframes absentFade { from { opacity: 0; } to { opacity: 1; } }
         .absent-title { font-size: 3.5rem; font-weight: 900; margin-bottom: 15px; text-shadow: 0 4px 10px rgba(0,0,0,0.15); }
         .absent-subtitle { font-size: 1.8rem; font-weight: bold; line-height: 1.5; margin-bottom: 40px; }
         
         .bottom-home-btn { background: #f1f5f9; border: none; padding: 18px; border-radius: 18px; color: #475569; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-top: 15px; width: 100%; transition: 0.2s; text-align: center; }
         .bottom-home-btn:hover { background: #e2e8f0; }
-        .absent-home-pos { background: white !important; color: #dc2626 !important; font-size: 1.3rem !important; padding: 20px 50px !important; width: auto !important; border-radius: 50px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .absent-home-pos { background: white !important; color: #dc2626 !important; font-size: 1.3rem !important; padding: 20px 50px !important; width: auto !important; border-radius: 50px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.2); pointer-events: auto !important; position: relative; z-index: 100000; }
     </style>
 </head>
 <body>
@@ -145,7 +146,7 @@
     let videoStream = null;
     let isSubmitted = false;
     let autoFallbackTimer = null;
-    let absentAutoTimer = null; // 💡 부재중 자동 복구용 타이머
+    let absentAutoTimer = null; 
     let lastAbsentTime = 0; 
     let koVoice = null;
 
@@ -314,23 +315,31 @@
         }, 1000);
     }
 
-    // 💡 [버그수정] 부재중 신호를 완전히 폭파시키고 페이지를 리로드하는 리셋 로직
-    function cleanReset() {
+    // 💡 [버그수정] 비동기 처리 완료를 확실히 보장하고 무조건 홈으로 탈출하는 동기화 복구 로직
+    async function cleanReset() {
         if(autoFallbackTimer) clearInterval(autoFallbackTimer);
         if(absentAutoTimer) clearTimeout(absentAutoTimer);
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         
-        // 서버에 부재중 신호 제거 요청을 백그라운드로 보낸 뒤 새로고침 진행
-        fetch(GAS_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ type: "clear_absent" })
-        }).then(() => {
+        const payload = JSON.stringify({ type: "clear_absent" });
+        
+        // 브라우저 튕김 차단용 안전장치 1순위: sendBeacon API 자동 연동
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon(GAS_URL, payload);
             location.reload();
-        }).catch(() => {
-            location.reload();
-        });
+            return;
+        }
+
+        // 백업 안전장치 2순위: async-await 비동기 동합 제어 구조
+        try {
+            await fetch(GAS_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: payload
+            });
+        } catch(e) { console.log(e); }
+        location.reload();
     }
 
     function getBestKoVoice() {
@@ -364,6 +373,7 @@
         document.getElementById('absentMsg').innerHTML = `<span style="font-size:2.8rem; font-weight:900; background:rgba(0,0,0,0.2); padding:4px 15px; border-radius:12px;">${teacherName}</span> 선생님은<br>현재 부재중이십니다.`;
         overlay.style.display = "flex";
 
+        // 🔊 [음량조정] 패드 부재중 알림 비프음 볼륨 가속 강화 (0.4 -> 0.9)
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             const ctx = new AudioContext();
@@ -371,28 +381,29 @@
             const playTone = (freq, time) => {
                 const osc = ctx.createOscillator(); const gain = ctx.createGain();
                 osc.type = 'sine'; osc.frequency.setValueAtTime(freq, time);
-                gain.gain.setValueAtTime(0, time); gain.gain.linearRampToValueAtTime(0.4, time + 0.05);
-                gain.gain.exponentialRampToValueAtTime(0.001, time + 0.35);
+                gain.gain.setValueAtTime(0, time); 
+                gain.gain.linearRampToValueAtTime(0.9, time + 0.05); // 명확하게 들리도록 볼륨 대폭 증가
+                gain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
                 osc.connect(gain); gain.connect(ctx.destination);
-                osc.start(time); osc.stop(time + 0.35);
+                osc.start(time); osc.stop(time + 0.4);
             };
-            playTone(587.33, now); playTone(587.33, now + 0.15); 
+            // 강한 경보 경고음 2연타 출력
+            playTone(698.46, now); playTone(698.46, now + 0.15); 
         } catch(e) {}
 
-        // 💡 [기능수정] 부재중 TTS 객체 생성 및 TTS 종료 시점 이벤트 리스너 바인딩
         setTimeout(() => {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const uttr = new SpeechSynthesisUtterance(`${teacherName} 선생님은 현재 부재중이십니다.`);
                 if(koVoice) uttr.voice = koVoice;
                 uttr.lang = 'ko-KR'; 
-                uttr.rate = 1.1;
+                uttr.rate = 1.05;
                 
-                // 💡 말하기가 완전히 종료되면 약 3초 뒤에 클린 리셋이 수행되도록 변경
+                // 🗣️ 부재중 음성 안내 TTS가 완전히 끝나면 자동으로 닫히는 트리거 이벤트 리스너
                 uttr.onend = function() {
                     absentAutoTimer = setTimeout(() => {
                         cleanReset();
-                    }, 3000); // 3000ms = 3초 여유
+                    }, 500); // TTS 끝난 후 0.5초 대기 후 깔끔하게 메인 홈으로 자동 자동 복구
                 };
                 
                 window.speechSynthesis.speak(uttr);
