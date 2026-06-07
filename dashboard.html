@@ -12,7 +12,6 @@
         .start-btn { background: #2563eb; color: white; padding: 25px 60px; border-radius: 20px; font-size: 2rem; border: none; cursor: pointer; font-weight: bold; box-shadow: 0 10px 30px rgba(37,99,235,0.3); }
         .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
         
-        /* 💡 사진을 없앴으므로 가로 폭을 100% 채우고 중앙 패딩 정렬 */
         .alert-card { background: white; border-radius: 40px; padding: 60px; text-align: left; box-shadow: 0 30px 60px rgba(0,0,0,0.1); display: none; flex-direction: column; justify-content: center; flex: 1; margin-bottom: 20px; border: 3px solid #2563eb; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
@@ -108,28 +107,36 @@
         
         card.style.display = "flex"; 
 
+        // 🔊 대시보드 알림음 귀 아픔 방지 제어 (볼륨 1.0 -> 0.15 로 대폭 축소)
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             const ctx = new AudioContext();
             const playTone = (freq, startTime, duration) => {
                 const gainNode = ctx.createGain();
-                const osc1 = ctx.createOscillator(); osc1.type = 'triangle'; osc1.frequency.setValueAtTime(freq, startTime);
-                gainNode.gain.setValueAtTime(0, startTime); gainNode.gain.linearRampToValueAtTime(1.0, startTime + 0.04);
-                gainNode.gain.setValueAtTime(1.0, startTime + duration - 0.1); gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+                const osc1 = ctx.createOscillator(); osc1.type = 'sine'; osc1.frequency.setValueAtTime(freq, startTime);
+                gainNode.gain.setValueAtTime(0, startTime); 
+                gainNode.gain.linearRampToValueAtTime(0.15, startTime + 0.04); // 볼륨을 부드럽고 작게 제어
+                gainNode.gain.setValueAtTime(0.15, startTime + duration - 0.1); 
+                gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
                 osc1.connect(gainNode); gainNode.connect(ctx.destination);
                 osc1.start(startTime); osc1.stop(startTime + duration);
             };
-            const now = ctx.currentTime; playTone(1318.51, now, 0.9); playTone(880.00, now + 0.25, 1.2);  
+            const now = ctx.currentTime; 
+            playTone(880.00, now, 0.4); playTone(1046.50, now + 0.2, 0.6); // 더 부드러운 알림 화음으로 선율 교체
         } catch (e) {}
 
+        // 🗣️ 알림음에 비해 작던 TTS 음량 가속 제어
         setTimeout(() => {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel(); 
                 const uttr = new SpeechSynthesisUtterance(`${d.teacher} 선생님, ${d.name} 학생이 ${d.purpose}로 호출했습니다.`);
                 if(koVoice) uttr.voice = koVoice; 
-                uttr.lang = 'ko-KR'; uttr.rate = 1.15; window.speechSynthesis.speak(uttr);
+                uttr.lang = 'ko-KR'; 
+                uttr.rate = 1.05; 
+                uttr.volume = 1.0; // 음량 100% 최대로 유지
+                window.speechSynthesis.speak(uttr);
             }
-        }, 750);
+        }, 650);
 
         historyList.unshift(d); 
         if(historyList.length > 3) historyList.pop();
