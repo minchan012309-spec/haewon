@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>교무실 호출 - 학생용</title>
+    <title>교무실 호출 - 학생용 및 관리자</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy.css" type="text/css"/>
     <style>
         * { 
             font-family: 'Paperlogy', sans-serif !important; 
-            box-sizing: border-box; 
+            box-sizing: border-box; \
             -webkit-tap-highlight-color: transparent; 
             user-select: none; 
         }
@@ -22,13 +22,13 @@
         .grid { display: grid; gap: 8px; margin-bottom: 20px; }
         .btn-opt { background: #f8fafc; border: 2px solid #e2e8f0; padding: 15px 5px; border-radius: 12px; cursor: pointer; text-align: center; font-weight: 600; color: #475569; transition: 0.2s; }
         .btn-opt.selected { background: #eff6ff; border-color: #2563eb; color: #2563eb; }
-        input, textarea { width: 100%; padding: 16px; border: 2px solid #e2e8f0; border-radius: 15px; font-size: 1.1rem; margin-bottom: 15px; outline: none; transition: 0.2s; }
-        input:focus, textarea:focus { border-color: #2563eb; }
+        input, select, textarea { width: 100%; padding: 16px; border: 2px solid #e2e8f0; border-radius: 15px; font-size: 1.1rem; margin-bottom: 15px; outline: none; transition: 0.2s; }
+        input:focus, select:focus, textarea:focus { border-color: #2563eb; }
         textarea { resize: none; font-size: 1rem; height: 80px; display: none; }
         
-        .welcome-box { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1; margin-top: 50px; }
+        .welcome-box { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1; margin-top: 30px; }
         .welcome-title { font-size: 2.4rem; font-weight: 900; color: #1e293b; margin-bottom: 10px; background: linear-gradient(to right, #2563eb, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .welcome-author { font-size: 1.1rem; font-weight: bold; color: #1e293b; background: #e2e8f0; padding: 8px 20px; border-radius: 50px; margin-bottom: 35px; }
+        .welcome-author { font-size: 1.1rem; font-weight: bold; color: #1e293b; background: #e2e8f0; padding: 8px 20px; border-radius: 50px; margin-bottom: 25px; }
         .welcome-desc { color: #64748b; font-size: 1.1rem; line-height: 1.6; }
 
         .agreement-box { background: #fff1f2; border: 2px solid #ffe4e6; padding: 20px; border-radius: 18px; margin-bottom: 25px; color: #9f1239; font-size: 0.9rem; line-height: 1.6; }
@@ -73,31 +73,52 @@
         .pad-btn:active { background: #cbd5e1; }
         .pad-btn.danger { background: #fee2e2; color: #ef4444; }
 
-        .admin-menu-container { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; }
-        .admin-rect-btn { display: flex; align-items: center; gap: 15px; background: #f8fafc; border: 2px solid #e2e8f0; padding: 20px; border-radius: 16px; cursor: pointer; transition: 0.2s; text-align: left; width: 100%; }
+        .admin-menu-container { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; max-height: 420px; overflow-y: auto; padding-right: 4px; }
+        .admin-rect-btn { display: flex; align-items: center; gap: 15px; background: #f8fafc; border: 2px solid #e2e8f0; padding: 14px; border-radius: 16px; cursor: pointer; transition: 0.2s; text-align: left; width: 100%; }
         .admin-rect-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
-        .admin-rect-btn .menu-icon { font-size: 2.2rem; background: white; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .admin-rect-btn .menu-icon { font-size: 1.8rem; background: white; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); flex-shrink: 0; }
         .admin-rect-btn .menu-text { display: flex; flex-direction: column; }
-        .admin-rect-btn .menu-title { font-size: 1.2rem; font-weight: bold; color: #1e293b; }
-        .admin-rect-btn .menu-subtitle { font-size: 0.85rem; color: #64748b; margin-top: 2px; }
+        .admin-rect-btn .menu-title { font-size: 1.05rem; font-weight: bold; color: #1e293b; }
+        .admin-rect-btn .menu-subtitle { font-size: 0.8rem; color: #64748b; margin-top: 2px; }
 
-        #logViewer { max-height: 250px; overflow-y: auto; text-align: left; margin: 15px 0; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; font-size: 0.85rem; display: none; background: #f8fafc; }
-        .log-item { padding: 10px; border-bottom: 1px dashed #cbd5e1; line-height: 1.4; color: #334155; }
-        .log-item:last-child { border-bottom: none; }
-        .log-tag { display: inline-block; background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-right: 5px; font-size: 0.75rem; }
+        .admin-back-header { display: flex; align-items: center; margin-bottom: 25px; padding-bottom: 12px; border-bottom: 2px solid #e2e8f0; text-align: left; }
+        .admin-back-btn { background: none; border: none; font-size: 1.8rem; font-weight: bold; cursor: pointer; color: #2563eb; margin-right: 15px; padding: 0 8px; border-radius: 8px; }
+        .admin-back-btn:hover { background: #f1f5f9; }
+        .sub-setting-title { font-size: 1.3rem; font-weight: 800; color: #1e293b; margin: 0; }
+        .settings-list-box { border: 2px solid #e2e8f0; border-radius: 15px; max-height: 240px; overflow-y: auto; margin-top: 10px; text-align: left; background: #f8fafc; }
+        .settings-list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; font-weight: 600; color: #334155; }
+        .settings-list-item:last-child { border-bottom: none; }
+        .settings-del-btn { background: #fee2e2; color: #ef4444; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
+        .settings-del-btn:hover { background: #fca5a5; }
+        .action-btn { background: #2563eb; color: white; border: none; padding: 16px; border-radius: 15px; font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%; margin-top: 5px; margin-bottom: 15px; }
+        .action-btn:hover { background: #1d4ed8; }
+        .action-btn.danger { background: #ef4444; }
+        .action-btn.danger:hover { background: #dc2626; }
+        .input-label { display: block; text-align: left; font-size: 0.9rem; font-weight: bold; color: #475569; margin-bottom: 6px; padding-left: 4px; }
+
+        .db-key-title { font-weight: bold; color: #1e293b; font-size: 0.95rem; word-break: break-all; }
+        .db-val-sub { font-size: 0.8rem; color: #64748b; font-family: monospace !important; word-break: break-all; margin-top: 4px; }
+        
+        .notice-banner { width: 100%; background: #fff7ed; border: 2px solid #ffedd5; border-radius: 16px; padding: 15px; color: #c2410c; font-weight: bold; text-align: center; margin-bottom: 25px; font-size: 0.95rem; line-height: 1.5; display: none; white-space: pre-wrap; }
+        .search-container { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; padding: 14px; margin-bottom: 15px; }
+        .search-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+        .search-grid input { margin-bottom: 0; padding: 12px; font-size: 0.95rem; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="container" id="mainContainer">
     <button id="mainSettingsBtn" class="settings-btn" onclick="openAdmin()">⚙️ 설정</button>
 
     <div id="page0" class="page active">
         <div class="welcome-box">
             <div class="welcome-title">교무실 호출벨 시스템</div>
             <div class="welcome-author">20216 김민찬 제작</div>
+            
+            <div id="mainNoticeBanner" class="notice-banner"></div>
+            
             <div class="welcome-desc">본 시스템은 교무실에 계신 선생님을</div>
-            <div class="welcome-desc" style="margin-bottom: 50px;">실시간으로 안전하고 빠르게 호출하는 통합 벨입니다.</div>
+            <div class="welcome-desc" style="margin-bottom: 40px;">실시간으로 안전하고 빠르게 호출하는 통합 벨입니다.</div>
         </div>
         <button class="btn-opt" onclick="go(1)" style="background:#2563eb; color:white; border:none; padding:22px; border-radius:20px; font-size:1.3rem; font-weight:bold; width:100%;">선생님 호출하기</button>
     </div>
@@ -124,7 +145,7 @@
 
     <div id="page3" class="page">
         <h1>개인정보 동의 및 전송</h1>
-        <div class="subtitle">안전한 서비스 운영과 악의적인 허위 호출(벨튀) 방지를 위해 아래 조항에 동의가 필요합니다.</div>
+        <div class="subtitle">안전한 service 운영과 악의적인 허위 호출(벨튀) 방지를 위해 아래 조항에 동의가 필요합니다.</div>
         
         <div class="agreement-box">
             <strong>[허위 호출 방지 및 불이익 안내]</strong>
@@ -154,20 +175,171 @@
         <div class="subtitle" style="text-align: center;"><span id="timerCountdown" style="color:#2563eb; font-weight:bold;">5초</span> 뒤 자동으로 메인 화면으로 이동합니다.<br>선생님께 정보가 실시간으로 전달되었습니다.</div>
         <button onclick="cleanReset()" style="background:#f1f5f9; border:none; padding:18px 40px; border-radius:18px; color:#4a5568; font-weight:bold; cursor:pointer; margin-top: 20px;">처음으로</button>
     </div>
+
+    <div id="page6" class="page">
+        <div class="admin-back-header">
+            <button class="admin-back-btn" onclick="backToDashboard()">&lt;</button>
+            <h2 class="sub-setting-title">🔒 마스터 비밀번호 변경</h2>
+        </div>
+        <span class="input-label">현재 비밀번호</span>
+        <input type="password" id="currentAdminPw" placeholder="현재 비밀번호 4자리 입력" maxlength="4">
+        <span class="input-label">새 비밀번호</span>
+        <input type="password" id="newAdminPw" placeholder="새 비밀번호 4자리 입력" maxlength="4">
+        <span class="input-label">새 비밀번호 재입력</span>
+        <input type="password" id="confirmAdminPw" placeholder="새 비밀번호 다시 입력" maxlength="4">
+        <button class="action-btn" onclick="executeChangePassword()">비밀번호 수정 완료</button>
+    </div>
+
+    <div id="page7" class="page">
+        <div class="admin-back-header">
+            <button class="admin-back-btn" onclick="backToDashboard()">&lt;</button>
+            <h2 class="sub-setting-title">👥 교사 명단 편집 관리</h2>
+        </div>
+        <span class="input-label">새로운 선생님 추가</span>
+        <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+            <input type="text" id="newTeacherInput" placeholder="선생님 성함 입력" style="margin:0;">
+            <button class="action-btn" onclick="addNewTeacherLineup()" style="width:90px; margin:0; padding:0;">추가</button>
+        </div>
+        <span class="input-label">현재 교사 배치 라인업 리스트</span>
+        <div class="settings-list-box" id="adminTeacherListBox"></div>
+    </div>
+
+    <div id="page8" class="page">
+        <div class="admin-back-header">
+            <button class="admin-back-btn" onclick="backToDashboard()">&lt;</button>
+            <h2 class="sub-setting-title">🚫 호출 제한 블랙리스트 설정</h2>
+        </div>
+        <span class="input-label">제한할 학생 학번</span>
+        <input type="text" id="blackStudentId" placeholder="학번 5자리 입력 (예: 20101)">
+        <span class="input-label">제한할 학생 이름</span>
+        <input type="text" id="blackStudentName" placeholder="이름 입력">
+        <span class="input-label">차단 유지 기간</span>
+        <select id="blackBlockPeriod">
+            <option value="1">오늘 하루 동안</option>
+            <option value="7">1주일 (7일)</option>
+            <option value="30">1달 (30일)</option>
+            <option value="999">영구 차단</option>
+        </select>
+        <button class="action-btn danger" onclick="registerBlacklist()">해당 학생 호출 차단 등록</button>
+        <span class="input-label" style="margin-top:10px;">현재 차단된 학생 명단</span>
+        <div class="settings-list-box" id="adminBlacklistListBox"></div>
+    </div>
+
+    <div id="page9" class="page">
+        <div class="admin-back-header">
+            <button class="admin-back-btn" onclick="backToDashboard()">&lt;</button>
+            <h2 class="sub-setting-title">🗄️ 학생 데이터베이스 등록 현황 관리</h2>
+        </div>
+        <div class="subtitle" style="margin-bottom:12px;">최초 호출 시 등록된 학번별 학생 데이터베이스 목록입니다. 수동 등록을 통해 미리 학생 정보를 입력할 수도 있습니다.</div>
+        
+        <span class="input-label">수동 학생 데이터 등록</span>
+        <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+            <input type="text" id="manualStudentId" placeholder="학번 5자리 (예: 20512)" maxlength="5" style="margin:0; flex:1;">
+            <input type="text" id="manualStudentName" placeholder="학생 이름" style="margin:0; flex:1;">
+            <button class="action-btn" onclick="addManualStudent()" style="width:80px; margin:0; padding:0; font-size:1rem;">등록</button>
+        </div>
+
+        <button class="action-btn danger" onclick="clearAllStudentRegistry()" style="padding:12px; margin-bottom:15px; font-size:1rem;">⚠️ 학생 데이터베이스 전체 초기화</button>
+        
+        <span class="input-label">등록된 학생 목록 (학번순 정렬)</span>
+        <div class="settings-list-box" id="adminStudentRegistryGridBox" style="max-height: 240px;"></div>
+    </div>
+
+    <div id="page10" class="page">
+        <div class="admin-back-header">
+            <button class="admin-back-btn" onclick="backToDashboard()">&lt;</button>
+            <h2 class="sub-setting-title">📋 전송 로그 조회</h2>
+        </div>
+        <div class="search-container">
+            <span class="input-label" style="margin-bottom: 4px;">조회 기간 선택 (달력 선택)</span>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <input type="date" id="searchLogStartDate" onchange="filterLogs()" style="margin-bottom: 0; padding: 12px; font-size: 0.95rem; flex: 1;">
+                <span style="font-weight: bold; color: #64748b;">~</span>
+                <input type="date" id="searchLogEndDate" onchange="filterLogs()" style="margin-bottom: 0; padding: 12px; font-size: 0.95rem; flex: 1;">
+            </div>
+            <div class="search-grid">
+                <input type="text" id="searchLogId" placeholder="학번 검색" oninput="filterLogs()">
+                <input type="text" id="searchLogName" placeholder="이름 검색" oninput="filterLogs()">
+            </div>
+            <div class="search-grid" style="margin-top: 8px; margin-bottom: 8px; grid-template-columns: 1fr;">
+                <input type="text" id="searchLogTeacher" placeholder="선생님 검색" oninput="filterLogs()">
+            </div>
+            <div id="searchLogResultCount" style="font-size:0.9rem; font-weight:bold; color:#2563eb; text-align:left; padding-left:4px;">0개의 데이터 찾음</div>
+        </div>
+        <button class="action-btn" onclick="downloadLogsCSV()" style="background:#10b981; margin-bottom:15px; padding:12px; font-size:1rem;">📥 전체 로그 다운로드 (CSV)</button>
+        <span class="input-label">로그 검색 리스트</span>
+        <div class="settings-list-box" id="fullLogListBox" style="max-height: 300px;"></div>
+    </div>
+
+    <div id="page11" class="page">
+        <div class="admin-back-header">
+            <button class="admin-back-btn" onclick="backToDashboard()">&lt;</button>
+            <h2 class="sub-setting-title">💾 설정 데이터 백업 및 복원</h2>
+        </div>
+        <div class="subtitle">기기 초기화나 태블릿 변경 시 즉시 원상 복구가 가능하도록 모든 로컬 DB 설정을 JSON 파일로 관리합니다.</div>
+        <button class="action-btn" onclick="exportSettingsJSON()" style="background:#2563eb; margin-bottom:20px; padding:15px;">📤 전체 설정 파일 내보내기 (JSON)</button>
+        <hr style="border:0; border-top:2px dashed #e2e8f0; margin:15px 0;">
+        <span class="input-label">백업 설정 파일 복원 (.json)</span>
+        <input type="file" id="importSettingsFileInput" accept=".json" style="padding:10px; font-size:0.95rem; border:2px dashed #cbd5e1; margin-bottom:15px;">
+        <button class="action-btn danger" onclick="importSettingsJSON()" style="padding:15px;">📥 백업 파일로 시스템 복원하기</button>
+    </div>
+
+    <div id="page12" class="page">
+        <div class="admin-back-header">
+            <button class="admin-back-btn" onclick="backToDashboard()">&lt;</button>
+            <h2 class="sub-setting-title">📝 관리자 시스템 제어 활동 기록</h2>
+        </div>
+        <div class="subtitle">설정 변경, 명단 편집, 패스워드 갱신 등 관리자의 핵심 행위가 실시간 역순 추적 기록됩니다.</div>
+        <button class="action-btn danger" onclick="clearAdminActivityLog()" style="padding:10px; font-size:0.9rem; margin-bottom:15px;">활동 로그 전체 기록 파기</button>
+        <div class="settings-list-box" id="adminActivityLogBox" style="max-height: 380px; background:#1e293b; border:none; padding:10px; color:#f8fafc;"></div>
+    </div>
+
+    <div id="page13" class="page">
+        <div class="admin-back-header">
+            <button class="admin-back-btn" onclick="backToDashboard()">&lt;</button>
+            <h2 class="sub-setting-title">📢 메인 공지 배너 메시지 설정</h2>
+        </div>
+        <div class="subtitle">학생용 메인 첫 화면 상단에 항시 배치할 중요 전달 메시지를 입력합니다. 내용을 지우면 배너가 즉시 노출 해제됩니다.</div>
+        <span class="input-label">공지사항 내용 (예: 시험기간 불필요한 호출 자제)</span>
+        <textarea id="mainNoticeInputText" placeholder="여기에 전달할 핵심 공지를 기입하세요." style="display:block; height:100px; font-size:1.05rem; margin-bottom:15px;"></textarea>
+        
+        <span class="input-label">글자 크기 설정</span>
+        <select id="mainNoticeSize" style="padding: 12px; margin-bottom: 15px;">
+            <option value="0.95rem">보통</option>
+            <option value="1.1rem">크게</option>
+            <option value="1.25rem">매우 크게</option>
+            <option value="1.4rem">최대</option>
+        </select>
+        
+        <span class="input-label">글자 색상 설정</span>
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
+            <input type="color" id="mainNoticeColor" value="#c2410c" style="width: 60px; height: 45px; padding: 0; border-radius: 10px; cursor: pointer; margin-bottom:0; border:2px solid #e2e8f0;">
+            <input type="text" id="mainNoticeColorHex" value="#c2410c" placeholder="#HEX코드" style="margin-bottom:0; padding:12px; font-size:1rem; flex:1;" oninput="document.getElementById('mainNoticeColor').value = this.value">
+        </div>
+        
+        <button class="action-btn" onclick="saveMainNoticeMessage()">공지사항 시스템 즉시 반영</button>
+    </div>
 </div>
 
 <div id="holdingOverlay"><h1 style="color:#2563eb;">처리 중...</h1></div>
 
 <div id="absentOverlay">
     <div class="absent-title">⚠️ 선생님 부재중</div>
-    <div class="absent-subtitle" id="absentMsg">호출하신 선생님은<br>현재 자리에 계시지 않습니다.</div>
+    <div class="absent-subtitle" id="absentMsg">호출하신 선생님은<br>현재 부재중이십니다.</div>
     <button class="bottom-home-btn absent-home-pos" onclick="cleanReset()">🏠 홈 화면으로 이동</button>
+</div>
+
+<div id="lockoutOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); z-index: 2000000; display: none; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; padding: 20px;">
+    <div style="font-size: 4rem; margin-bottom: 20px;">🔒</div>
+    <h2 style="font-size: 1.8rem; font-weight: 900; margin-bottom: 10px; color: #f8fafc;">보안 시스템 작동</h2>
+    <div style="font-size: 1.05rem; color: #94a3b8; line-height: 1.6; margin-bottom: 30px;">패스워드 누적 오답 한도(5회) 초과로 인하여<br>관리자 페이지 진입 권한이 일시 잠금되었습니다.</div>
+    <div id="lockoutTimer" style="font-size: 3.5rem; font-weight: bold; color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 15px 45px; border-radius: 20px; border: 2px solid rgba(239, 68, 68, 0.25); font-family: monospace !important; letter-spacing: 2px;">05:00</div>
 </div>
 
 <div id="adminModal">
     <div class="admin-box" id="stepPin">
         <h2 style="margin:0; color:#1e293b; font-size:1.4rem;">관리자 인증</h2>
-        <div class="subtitle" style="margin-bottom:10px;">비밀번호 4자리를 입력하세요.</div>
+        <div class="subtitle" style="margin-bottom:10px;" id="pinSubtitle">비밀번호 4자리를 입력하세요.</div>
         <div class="pin-display" id="pinStars"></div>
         <div class="pad-grid">
             <button class="pad-btn" onclick="pressPin('1')">1</button>
@@ -187,7 +359,22 @@
     
     <div class="admin-box" id="stepControlDashboard" style="display:none; max-width: 440px;">
         <h2 style="margin:0; color:#2563eb; font-size:1.5rem; font-weight:900;">⚙️ 관리자 시스템 제어판</h2>
-        <div class="subtitle" style="margin-bottom:15px;">요청할 작업을 선택해 주세요.</div>
+        <div class="subtitle" style="margin-bottom:10px;">요청할 작업을 선택해 주세요.</div>
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 15px; background: #f8fafc; padding: 12px; border-radius: 16px; border: 2px solid #e2e8f0;">
+            <div style="text-align: center;">
+                <div style="font-size: 0.72rem; color: #64748b; font-weight: bold;">오늘 총 호출</div>
+                <div id="statTodayCount" style="font-size: 1.15rem; font-weight: 900; color: #2563eb; margin-top: 2px;">0건</div>
+            </div>
+            <div style="text-align: center; border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 0 2px;">
+                <div style="font-size: 0.72rem; color: #64748b; font-weight: bold;">최다 호출 교사</div>
+                <div id="statTopTeacher" style="font-size: 0.88rem; font-weight: 900; color: #1e293b; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">-</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 0.72rem; color: #64748b; font-weight: bold;">주요 호출 사유</div>
+                <div id="statTopPurpose" style="font-size: 0.88rem; font-weight: 900; color: #0f172a; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">-</div>
+            </div>
+        </div>
         
         <div class="admin-menu-container">
             <button class="admin-rect-btn" onclick="sendTestCall()">
@@ -198,16 +385,70 @@
                 </div>
             </button>
 
-            <button class="admin-rect-btn" onclick="toggleLogViewer()">
+            <button class="admin-rect-btn" onclick="switchToSubSettingPage(10)">
                 <div class="menu-icon">📋</div>
                 <div class="menu-text">
-                    <span class="menu-title">전송 로그 확인 (최근 5개)</span>
-                    <span class="menu-subtitle">가장 최근 전송된 내역 5개를 불러옵니다.</span>
+                    <span class="menu-title">전송 로그 조회</span>
+                    <span class="menu-subtitle">상세 필터링 다중 검색 및 블랙리스트 연동 제어.</span>
+                </div>
+            </button>
+
+            <button class="admin-rect-btn" onclick="switchToSubSettingPage(13)">
+                <div class="menu-icon">📢</div>
+                <div class="menu-text">
+                    <span class="menu-title">메인 공지 배너 제어</span>
+                    <span class="menu-subtitle">호출 앱 메인 화면 상단에 배너 메시지를 송출합니다.</span>
+                </div>
+            </button>
+
+            <button class="admin-rect-btn" onclick="switchToSubSettingPage(6)">
+                <div class="menu-icon">🔒</div>
+                <div class="menu-text">
+                    <span class="menu-title">마스터 비밀번호 수정</span>
+                    <span class="menu-subtitle">진입 4자리 인증 비밀번호를 변경합니다.</span>
+                </div>
+            </button>
+
+            <button class="admin-rect-btn" onclick="switchToSubSettingPage(7)">
+                <div class="menu-icon">👥</div>
+                <div class="menu-text">
+                    <span class="menu-title">교사 라인업 수정</span>
+                    <span class="menu-subtitle">교사명단을 수정합니다.</span>
+                </div>
+            </button>
+
+            <button class="admin-rect-btn" onclick="switchToSubSettingPage(8)">
+                <div class="menu-icon">🚫</div>
+                <div class="menu-text">
+                    <span class="menu-title">블랙리스트 차단 관리</span>
+                    <span class="menu-subtitle">벨튀 학생의 학번을 지정 차단합니다.</span>
+                </div>
+            </button>
+
+            <button class="admin-rect-btn" onclick="switchToSubSettingPage(9)">
+                <div class="menu-icon">🗄️</div>
+                <div class="menu-text">
+                    <span class="menu-title">학생 데이터베이스 관리</span>
+                    <span class="menu-subtitle">등록된 학생의 이름 연동 캐시 정보를 제어합니다.</span>
+                </div>
+            </button>
+
+            <button class="admin-rect-btn" onclick="switchToSubSettingPage(11)">
+                <div class="menu-icon">💾</div>
+                <div class="menu-text">
+                    <span class="menu-title">설정 데이터 백업 및 복원</span>
+                    <span class="menu-subtitle">JSON 백업 파일 내보내기 및 마이그레이션 로드.</span>
+                </div>
+            </button>
+
+            <button class="admin-rect-btn" onclick="switchToSubSettingPage(12)">
+                <div class="menu-icon">📝</div>
+                <div class="menu-text">
+                    <span class="menu-title">관리자 제어 행위 추적 로그</span>
+                    <span class="menu-subtitle">대시보드 관리 활동의 가동 이력을 추적합니다.</span>
                 </div>
             </button>
         </div>
-
-        <div id="logViewer"></div>
 
         <button class="bottom-home-btn" style="margin-top:10px; padding:14px;" onclick="closeAdmin()">제어판 닫기</button>
     </div>
@@ -223,14 +464,95 @@
     let videoStream = null;
     let isSubmitted = false;
     let autoFallbackTimer = null;
-    let absentAutoTimer = null; 
+    let lockoutInterval = null;
     let koVoice = null;
     let inputtedPin = "";
     let systemLogCache = [];
+    let allFetchedLogs = []; 
+    let isAbsentTriggered = false; 
+
+    let dynamicTeachers = ['김선미', '김현민', '김지안', '방지수', '신주원', '안예슬', '유진선', '윤희연', '이희진', '진경훈', '최대한'];
+    let blacklistStorage = [ {id: "20999", name: "배드보이", period: "7일"} ];
+    let studentRegistry = {}; 
+    let currentMasterPin = "1837";
+
+    function logAdminActivity(actionText) {
+        let logs = JSON.parse(localStorage.getItem('sys_admin_activity_log') || '[]');
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        logs.unshift(`${timeStr} ${actionText}`);
+        if(logs.length > 100) logs.pop();
+        localStorage.setItem('sys_admin_activity_log', JSON.stringify(logs));
+    }
+
+    function updateMainNoticeDisplay() {
+        const msg = localStorage.getItem('sys_main_notice') || '';
+        const banner = document.getElementById('mainNoticeBanner');
+        if(msg.trim()) {
+            banner.innerText = msg;
+            banner.style.fontSize = localStorage.getItem('sys_main_notice_size') || '0.95rem';
+            banner.style.color = localStorage.getItem('sys_main_notice_color') || '#c2410c';
+            banner.style.display = 'block';
+        } else {
+            banner.style.display = 'none';
+        }
+    }
+
+    function updateLockoutTimerVisual() {
+        const blockUntil = parseInt(localStorage.getItem('sys_admin_block_until') || '0');
+        const now = Date.now();
+        if (blockUntil > now) {
+            const remainSec = Math.ceil((blockUntil - now) / 1000);
+            const mins = String(Math.floor(remainSec / 60)).padStart(2, '0');
+            const secs = String(remainSec % 60).padStart(2, '0');
+            document.getElementById('lockoutTimer').innerText = `${mins}:${secs}`;
+            document.getElementById('lockoutOverlay').style.display = 'flex';
+            if (!lockoutInterval) {
+                lockoutInterval = setInterval(updateLockoutTimerVisual, 1000);
+            }
+        } else {
+            if (lockoutInterval) {
+                clearInterval(lockoutInterval);
+                lockoutInterval = null;
+            }
+            document.getElementById('lockoutOverlay').style.display = 'none';
+        }
+    }
+
+    function loadFromLocalStorageDB() {
+        if(localStorage.getItem('sys_master_pin')) {
+            currentMasterPin = localStorage.getItem('sys_master_pin');
+        }
+        if(localStorage.getItem('sys_teachers')) {
+            dynamicTeachers = JSON.parse(localStorage.getItem('sys_teachers'));
+        }
+        if(localStorage.getItem('sys_blacklist')) {
+            blacklistStorage = JSON.parse(localStorage.getItem('sys_blacklist'));
+        }
+        if(localStorage.getItem('sys_student_registry')) {
+            studentRegistry = JSON.parse(localStorage.getItem('sys_student_registry'));
+        }
+        updateMainNoticeDisplay();
+    }
+
+    function saveToLocalStorageDB(key, dataValue) {
+        if(typeof dataValue === 'object') {
+            localStorage.setItem(key, JSON.stringify(dataValue));
+        } else {
+            localStorage.setItem(key, dataValue);
+        }
+    }
 
     function openAdmin() {
         clearPin();
-        document.getElementById('logViewer').style.display = 'none';
+        
+        const blockUntil = parseInt(localStorage.getItem('sys_admin_block_until') || '0');
+        const now = Date.now();
+        if(blockUntil > now) {
+            updateLockoutTimerVisual();
+            return;
+        }
+
         document.getElementById('stepPin').style.display = 'block';
         document.getElementById('stepControlDashboard').style.display = 'none';
         document.getElementById('adminModal').style.display = 'flex';
@@ -242,18 +564,35 @@
     }
 
     function pressPin(num) {
+        const blockUntil = parseInt(localStorage.getItem('sys_admin_block_until') || '0');
+        if(Date.now() < blockUntil) { clearPin(); return; }
+
         if(inputtedPin.length >= 4) return;
         inputtedPin += num;
         document.getElementById('pinStars').innerText = "• ".repeat(inputtedPin.length);
         
         if(inputtedPin.length === 4) {
             setTimeout(() => {
-                if(inputtedPin === "1837") { 
+                if(inputtedPin === currentMasterPin) { 
+                    localStorage.setItem('sys_admin_fail_count', '0');
+                    localStorage.setItem('sys_admin_block_until', '0');
                     document.getElementById('stepPin').style.display = 'none';
                     document.getElementById('stepControlDashboard').style.display = 'block';
+                    calculateTodayStats(); // 진입 성공 시 오늘 대시보드 통계 계산 가동
                 } else {
-                    alert("비밀번호가 올바르지 않습니다.");
-                    clearPin();
+                    let failCount = parseInt(localStorage.getItem('sys_admin_fail_count') || '0') + 1;
+                    localStorage.setItem('sys_admin_fail_count', failCount);
+                    
+                    if(failCount >= 5) {
+                        const lockTime = Date.now() + 5 * 60 * 1000; 
+                        localStorage.setItem('sys_admin_block_until', lockTime);
+                        logAdminActivity("연속 인증 실패로 인한 관리자 화면 5분 잠금 작동");
+                        closeAdmin();
+                        updateLockoutTimerVisual();
+                    } else {
+                        alert(`비밀번호가 올바르지 않습니다. (인증 오류 횟수: ${failCount} / 5)`);
+                        clearPin();
+                    }
                 }
             }, 150);
         }
@@ -264,97 +603,483 @@
         document.getElementById('pinStars').innerText = "";
     }
 
-    function sendTestCall() {
-        const testTeacher = data.t || '김선미'; 
-        const payload = {
-            teacher: testTeacher,
-            id: "21145",            
-            name: "테스트",         
-            purpose: "시스템 테스트",
-            image: ""
-        };
-
-        fetch(GAS_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload)
-        }).catch(e => console.log(e));
-
-        alert(`[${testTeacher} 선생님]께 테스트 호출 신호(11반 45번 테스트)를 전송했습니다!`);
+    function switchToSubSettingPage(pageNumber) {
+        closeAdmin(); 
+        document.getElementById('mainSettingsBtn').style.display = 'none';
+        
+        if(pageNumber === 7) renderAdminTeacherList();
+        if(pageNumber === 8) renderAdminBlacklist();
+        if(pageNumber === 9) renderStudentRegistryGridList();
+        if(pageNumber === 10) loadFullLogPage();
+        if(pageNumber === 12) renderAdminActivityLog();
+        if(pageNumber === 13) renderMainNoticeInput();
+        
+        go(pageNumber);
     }
 
-    // 📋 [로그 뷰어 비동기 CORS 런타임 픽스]
-    async function toggleLogViewer() {
-        const viewer = document.getElementById('logViewer');
-        if(viewer.style.display === 'block') {
-            viewer.style.display = 'none';
+    function backToDashboard() {
+        document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+        document.getElementById('page0').classList.add('active');
+        document.getElementById('mainSettingsBtn').style.display = 'flex';
+        openAdmin();
+        document.getElementById('stepPin').style.display = 'none';
+        document.getElementById('stepControlDashboard').style.display = 'block';
+        calculateTodayStats(); // 대시보드로 유턴 시에도 실시간 통계 갱신
+    }
+
+    // 오늘 통계 연동 및 산출 엔진 컴포넌트
+    async function calculateTodayStats() {
+        try {
+            if(allFetchedLogs.length === 0) {
+                const res = await fetch(`${GAS_URL}?type=get_calls&v=${Date.now()}`);
+                const textData = await res.text();
+                let serverData = JSON.parse(textData);
+                if(serverData && !Array.isArray(serverData)) serverData = serverData.name ? [serverData] : [];
+                
+                let combined = [...serverData, ...systemLogCache];
+                let uniqueLogs = [];
+                let seen = new Set();
+                for(let log of combined) {
+                    if(!log || !log.name) continue;
+                    let key = `${log.id}_${log.timestamp || log.time || log.date}`;
+                    if(!seen.has(key)) { seen.add(key); uniqueLogs.push(log); }
+                }
+                allFetchedLogs = uniqueLogs;
+            }
+        } catch(e) {
+            allFetchedLogs = [...systemLogCache];
+        }
+
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+        const todayLogs = allFetchedLogs.filter(log => {
+            return parseToYYYYMMDD(log.time || log.timestamp) === todayStr;
+        });
+
+        document.getElementById('statTodayCount').innerText = `${todayLogs.length}건`;
+
+        const teacherMap = {};
+        const purposeMap = {};
+        todayLogs.forEach(log => {
+            if(log.teacher) teacherMap[log.teacher] = (teacherMap[log.teacher] || 0) + 1;
+            if(log.purpose) purposeMap[log.purpose] = (purposeMap[log.purpose] || 0) + 1;
+        });
+
+        let topTeacher = "-";
+        let maxTCount = 0;
+        for(let t in teacherMap) {
+            if(teacherMap[t] > maxTCount) { maxTCount = teacherMap[t]; topTeacher = t; }
+        }
+        document.getElementById('statTopTeacher').innerText = topTeacher !== "-" ? `${topTeacher} 쌤` : "-";
+
+        let topPurpose = "-";
+        let maxPCount = 0;
+        for(let p in purposeMap) {
+            if(purposeMap[p] > maxPCount) { maxPCount = purposeMap[p]; topPurpose = p; }
+        }
+        if(topPurpose.length > 5) topPurpose = topPurpose.slice(0, 4) + "..";
+        document.getElementById('statTopPurpose').innerText = topPurpose;
+    }
+
+    function executeChangePassword() {
+        const cur = document.getElementById('currentAdminPw').value;
+        const nPw = document.getElementById('newAdminPw').value;
+        const cPw = document.getElementById('confirmAdminPw').value;
+        
+        if(cur !== currentMasterPin) { alert("기존 마스터 비밀번호 인증에 실패하였습니다."); return; }
+        if(nPw.length !== 4 || isNaN(nPw)) { alert("새 비밀번호는 숫자 4자리 형태여야 합니다."); return; }
+        if(nPw !== cPw) { alert("새 비밀번호 확인 재입력 값이 매칭되지 않습니다."); return; }
+        
+        currentMasterPin = nPw; 
+        saveToLocalStorageDB('sys_master_pin', currentMasterPin);
+        logAdminActivity("비밀번호 변경");
+        
+        alert("마스터 패스워드가 안전하게 변경 및 기록되었습니다.");
+        document.getElementById('currentAdminPw').value = "";
+        document.getElementById('newAdminPw').value = "";
+        document.getElementById('confirmAdminPw').value = "";
+        backToDashboard();
+    }
+
+    function renderAdminTeacherList() {
+        const box = document.getElementById('adminTeacherListBox');
+        if(dynamicTeachers.length === 0) {
+            box.innerHTML = '<div class="settings-list-item">등록된 교사가 없습니다.</div>';
             return;
         }
-        
-        viewer.innerHTML = "<div style='text-align:center; padding:10px; color:#64748b;'>로그 데이터를 불러오는 중...</div>";
-        viewer.style.display = 'block';
+        box.innerHTML = dynamicTeachers.map((t, idx) => `
+            <div class="settings-list-item">
+                <span>${t} 선생님</span>
+                <button class="settings-del-btn" onclick="deleteTeacherLineup(${idx})">삭제</button>
+            </div>
+        `).join('');
+    }
 
+    function addNewTeacherLineup() {
+        const input = document.getElementById('newTeacherInput');
+        const name = input.value.trim();
+        if(!name) { alert("선생님 이름을 정확히 입력하세요."); return; }
+        
+        dynamicTeachers.push(name);
+        input.value = "";
+        
+        saveToLocalStorageDB('sys_teachers', dynamicTeachers);
+        logAdminActivity(`${name} 추가`);
+        renderAdminTeacherList();
+        buildTeacherFrontGrid(); 
+        alert(`[${name}] 선생님 배치 정보가 정상 반영되었습니다.`);
+    }
+
+    function deleteTeacherLineup(index) {
+        const targetName = dynamicTeachers[index];
+        if(confirm(`[${targetName}] 선생님을 목록 라인업에서 완전히 삭제 처리할까요?`)) {
+            dynamicTeachers.splice(index, 1);
+            saveToLocalStorageDB('sys_teachers', dynamicTeachers);
+            logAdminActivity(`${targetName} 제거`);
+            renderAdminTeacherList();
+            buildTeacherFrontGrid(); 
+        }
+    }
+
+    function renderAdminBlacklist() {
+        const box = document.getElementById('adminBlacklistListBox');
+        if(blacklistStorage.length === 0) {
+            box.innerHTML = '<div class="settings-list-item">현재 제재중인 호출 차단자가 없습니다.</div>';
+            return;
+        }
+        box.innerHTML = blacklistStorage.map((b, idx) => `
+            <div class="settings-list-item">
+                <span>[${b.id}] ${b.name} (${b.period})</span>
+                <button class="settings-del-btn" style="background:#e0f2fe; color:#0369a1;" onclick="liftBlacklist(${idx})">차단 해제</button>
+            </div>
+        `).join('');
+    }
+
+    function registerBlacklist() {
+        const idInp = document.getElementById('blackStudentId').value.trim();
+        const nameInp = document.getElementById('blackStudentName').value.trim();
+        const periodText = document.getElementById('blackBlockPeriod').options[document.getElementById('blackBlockPeriod').selectedIndex].text;
+        
+        if(idInp.length !== 5 || isNaN(idInp)) { alert("학번 5자리를 정확히 기입해 주세요."); return; }
+        if(!nameInp) { alert("학생 성명을 기입해 주세요."); return; }
+        
+        blacklistStorage.push({ id: idInp, name: nameInp, period: periodText });
+        saveToLocalStorageDB('sys_blacklist', blacklistStorage);
+        logAdminActivity(`블랙리스트 등록 (${idInp} ${nameInp})`);
+        
+        document.getElementById('blackStudentId').value = "";
+        document.getElementById('blackStudentName').value = "";
+        
+        renderAdminBlacklist();
+        alert(`학번 ${idInp} 학생이 블랙리스트에 제재 등록되었습니다.`);
+    }
+
+    function liftBlacklist(index) {
+        const b = blacklistStorage[index];
+        logAdminActivity(`블랙리스트 해제 (${b.id} ${b.name})`);
+        alert("해당 학생의 블로킹 제재가 철회 조치되었습니다.");
+        blacklistStorage.splice(index, 1);
+        saveToLocalStorageDB('sys_blacklist', blacklistStorage);
+        renderAdminBlacklist();
+    }
+
+    function renderStudentRegistryGridList() {
+        const box = document.getElementById('adminStudentRegistryGridBox');
+        box.innerHTML = "";
+        
+        const keys = Object.keys(studentRegistry);
+        if(keys.length === 0) {
+            box.innerHTML = '<div class="settings-list-item">등록된 학생 DB가 비어있습니다.</div>';
+            return;
+        }
+        keys.sort((a, b) => parseInt(a) - parseInt(b));
+
+        let html = "";
+        keys.forEach(sid => {
+            const sname = studentRegistry[sid];
+            html += `
+                <div class="settings-list-item" style="align-items: center; gap: 10px;">
+                    <div style="display: flex; flex-direction: column; text-align: left;">
+                        <span class="db-key-title">👤 학번: ${sid}</span>
+                        <span class="db-val-sub">이름: ${sname}</span>
+                    </div>
+                    <button class="settings-del-btn" onclick="deleteSingleStudentKey('${sid}')">삭제</button>
+                </div>
+            `;
+        });
+        box.innerHTML = html;
+    }
+
+    // 학생 수동 등록 제어 로직 펑션 컴포넌트
+    function addManualStudent() {
+        const idInp = document.getElementById('manualStudentId').value.trim();
+        const nameInp = document.getElementById('manualStudentName').value.trim();
+        if(idInp.length !== 5 || isNaN(idInp)) { alert("학번 5자리를 올바르게 기입하세요."); return; }
+        if(!nameInp) { alert("학생 성명을 입력해 주세요."); return; }
+        
+        studentRegistry[idInp] = nameInp;
+        saveToLocalStorageDB('sys_student_registry', studentRegistry);
+        logAdminActivity(`학생 수동 등록 (${idInp} ${nameInp})`);
+        
+        document.getElementById('manualStudentId').value = "";
+        document.getElementById('manualStudentName').value = "";
+        renderStudentRegistryGridList();
+        alert(`학번 ${idInp} (${nameInp}) 학생이 데이터베이스에 정상 등록되었습니다.`);
+    }
+
+    function deleteSingleStudentKey(sid) {
+        if(confirm(`[데이터 파기] 학번 [ ${sid} ] 학생 캐시를 영구 파기할까요?`)) {
+            const name = studentRegistry[sid];
+            delete studentRegistry[sid];
+            saveToLocalStorageDB('sys_student_registry', studentRegistry);
+            logAdminActivity(`학생 단일 캐시 파기 (${sid} ${name})`);
+            renderStudentRegistryGridList();
+        }
+    }
+
+    function clearAllStudentRegistry() {
+        if(confirm("🚨 [경고] 등록된 모든 학생의 자동완성 이름 연동 정보가 전면 삭제됩니다. 진행합니까?")) {
+            studentRegistry = {};
+            saveToLocalStorageDB('sys_student_registry', studentRegistry);
+            logAdminActivity("학생 DB 전체 초기화");
+            renderStudentRegistryGridList();
+            alert("학생 연동 데이터베이스가 완전 초기화되었습니다.");
+        }
+    }
+
+    // 전송 로그 날짜 포맷 표준화 유틸 피커 커널
+    function parseToYYYYMMDD(str) {
+        if(!str) return "";
+        str = String(str).trim();
+        if(/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
+        let matches = str.match(/(\d{4})[\.\-\/]\s*(\d{1,2})[\.\-\/]\s*(\d{1,2})/);
+        if(matches) {
+            return `${matches[1]}-${matches[2].padStart(2,'0')}-${matches[3].padStart(2,'0')}`;
+        }
+        let d = new Date(str);
+        if(!isNaN(d.getTime())) {
+            let y = d.getFullYear();
+            let m = String(d.getMonth() + 1).padStart(2, '0');
+            let day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+        return "";
+    }
+
+    async function loadFullLogPage() {
+        const box = document.getElementById('fullLogListBox');
+        box.innerHTML = "<div style='text-align:center; padding:20px; color:#64748b;'>전체 원격 전송 로그 수집 동기화 중...</div>";
+        
         try {
-            // CORS 에러와 데이터 가로챔 방지를 위해 텍스트 스트림 형태로 변환 후 가공
             const res = await fetch(`${GAS_URL}?type=get_calls&v=${Date.now()}`);
             const textData = await res.text();
-            let d = JSON.parse(textData);
-            
-            if(d && !Array.isArray(d)) {
-                if(d.name) { d = [d]; } else { d = []; }
+            let serverData = JSON.parse(textData);
+            if(serverData && !Array.isArray(serverData)) {
+                serverData = serverData.name ? [serverData] : [];
             }
-
-            let combinedLogs = [...d, ...systemLogCache];
+            
+            let combined = [...serverData, ...systemLogCache];
             let uniqueLogs = [];
-            let seenKeys = new Set();
-
-            for (let log of combinedLogs) {
+            let seen = new Set();
+            for(let log of combined) {
                 if(!log || !log.name) continue;
-                let key = `${log.id}_${log.timestamp || log.time}`;
-                if (!seenKeys.has(key)) {
-                    seenKeys.add(key);
+                let key = `${log.id}_${log.timestamp || log.time || log.date}`;
+                if(!seen.has(key)) {
+                    seen.add(key);
                     uniqueLogs.push(log);
                 }
             }
-
-            let finalLogs = uniqueLogs.slice(0, 5);
-
-            if(finalLogs.length > 0) {
-                let html = '';
-                finalLogs.forEach((log, index) => {
-                    html += `
-                        <div class="log-item">
-                            <span class="log-tag">호출 ${index + 1}</span>
-                            <strong>교사:</strong> ${log.teacher} 쌤<br>
-                            <strong>학생:</strong> ${log.id} ${log.name}<br>
-                            <strong>사유:</strong> <span style="color:#2563eb;">${log.purpose}</span>
-                        </div>
-                    `;
-                });
-                viewer.innerHTML = html;
-            } else {
-                viewer.innerHTML = "<div style='text-align:center; padding:10px; color:#94a3b8;'>최근 전송 이력이 비어있습니다.</div>";
-            }
+            allFetchedLogs = uniqueLogs;
         } catch(e) {
-            console.error(e);
-            if(systemLogCache.length > 0) {
-                let html = '';
-                systemLogCache.slice(0, 5).forEach((log, index) => {
-                    html += `
-                        <div class="log-item">
-                            <span class="log-tag">로컬 ${index + 1}</span>
-                            <strong>교사:</strong> ${log.teacher} 쌤<br>
-                            <strong>학생:</strong> ${log.id} ${log.name}<br>
-                            <strong>사유:</strong> <span style="color:#2563eb;">${log.purpose}</span>
-                        </div>
-                    `;
-                });
-                viewer.innerHTML = html;
-            } else {
-                viewer.innerHTML = "<div style='text-align:center; padding:10px; color:#ef4444;'>로그를 동기화하지 못했습니다. (서버 연결 불량)</div>";
-            }
+            allFetchedLogs = [...systemLogCache];
         }
+        filterLogs();
+    }
+
+    function filterLogs() {
+        const sStart = document.getElementById('searchLogStartDate').value; 
+        const sEnd = document.getElementById('searchLogEndDate').value;     
+        const sId = document.getElementById('searchLogId').value.trim();
+        const sName = document.getElementById('searchLogName').value.trim().toLowerCase();
+        const sTeacher = document.getElementById('searchLogTeacher').value.trim().toLowerCase();
+        
+        const filtered = allFetchedLogs.filter(log => {
+            const timeStr = log.time || log.timestamp || '';
+            const logDateStr = parseToYYYYMMDD(timeStr); // 다중 포맷 파싱 및 변환 통과
+            
+            const dateMatch = (!sStart || logDateStr >= sStart) && (!sEnd || logDateStr <= sEnd);
+            const idMatch = !sId || String(log.id || '').includes(sId);
+            const nameMatch = !sName || String(log.name || '').toLowerCase().includes(sName);
+            const teacherMatch = !sTeacher || String(log.teacher || '').toLowerCase().includes(sTeacher);
+            return dateMatch && idMatch && nameMatch && teacherMatch;
+        });
+
+        document.getElementById('searchLogResultCount').innerText = `${filtered.length}개의 데이터 찾음`;
+        
+        const box = document.getElementById('fullLogListBox');
+        if(filtered.length === 0) {
+            box.innerHTML = '<div class="settings-list-item" style="justify-content:center; color:#94a3b8;">매칭된 검색 로그가 없습니다.</div>';
+            return;
+        }
+
+        box.innerHTML = filtered.map(log => {
+            const tDisplay = log.time ? String(log.time).slice(5,16) : '실시간 전송';
+            return `
+                <div class="settings-list-item" style="padding:12px; font-size:0.88rem; gap:10px;">
+                    <div style="text-align:left; line-height:1.4;">
+                        <span style="font-size:0.75rem; background:#e2e8f0; padding:2px 6px; border-radius:4px; color:#475569; font-weight:bold; margin-right:5px;">${tDisplay}</span>
+                        <strong>${log.teacher} 쌤</strong> 호출<br>
+                        <span style="color:#64748b;">학번성명: ${log.id} ${log.name} (${log.purpose || '사유 미지정'})</span>
+                    </div>
+                    <button class="settings-del-btn" style="flex-shrink:0;" onclick="instantConnectBlacklist('${log.id}', '${log.name}')">차단</button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function instantConnectBlacklist(sid, sname) {
+        if(confirm(`[블랙리스트 연계]\n학번 ${sid} (${sname}) 학생을 즉시 영구 차단 등록하시겠습니까?`)) {
+            blacklistStorage.push({ id: sid, name: sname, period: "영구 차단" });
+            saveToLocalStorageDB('sys_blacklist', blacklistStorage);
+            logAdminActivity(`블랙리스트 등록 (${sid} ${sname})`);
+            alert(`학번 ${sid} 학생이 호출 제한 제재 목록에 즉시 연동 반영되었습니다.`);
+            filterLogs();
+        }
+    }
+
+    function downloadLogsCSV() {
+        if(allFetchedLogs.length === 0) { alert("다운로드할 로그 아카이브가 비어있습니다."); return; }
+        
+        let csvContent = "\uFEFF호출일자/시간,담당선생님,호출학생학번,학생성명,호출목적\n";
+        
+        allFetchedLogs.forEach(log => {
+            const row = [
+                log.time || log.timestamp || '',
+                log.teacher || '',
+                log.id || '',
+                log.name || '',
+                log.purpose || ''
+            ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
+            csvContent += row + "\n";
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", `교무실호출_로그리포트_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        logAdminActivity("전체 로그 CSV 파일 아웃풋 내보내기");
+    }
+
+    function exportSettingsJSON() {
+        const backupDataBundle = {
+            sys_master_pin: currentMasterPin,
+            sys_teachers: dynamicTeachers,
+            sys_blacklist: blacklistStorage,
+            sys_student_registry: studentRegistry,
+            sys_main_notice: localStorage.getItem('sys_main_notice') || '',
+            sys_main_notice_size: localStorage.getItem('sys_main_notice_size') || '0.95rem',
+            sys_main_notice_color: localStorage.getItem('sys_main_notice_color') || '#c2410c'
+        };
+
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupDataBundle, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `FACULTY_CALL_BACKUP_${new Date().toISOString().slice(0,10)}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        
+        logAdminActivity("시스템 설정 JSON 데이터 백업본 내보내기");
+        alert("모든 설정 백업 파일이 성공적으로 다운로드되었습니다.");
+    }
+
+    function importSettingsJSON() {
+        const fileInput = document.getElementById('importSettingsFileInput');
+        if(!fileInput.files || fileInput.files.length === 0) { alert("복원 처리할 JSON 백업 아카이브 파일을 선택하십시오."); return; }
+        
+        if(!confirm("⚠️ 경고: 기존 기기 내의 로컬 데이터베이스 및 교사 배치 명단 구조가 업로드된 백업본으로 오버라이드(덮어쓰기) 처리됩니다. 진행할까요?")) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedJson = JSON.parse(e.target.result);
+                if(importedJson.sys_master_pin) localStorage.setItem('sys_master_pin', importedJson.sys_master_pin);
+                if(importedJson.sys_teachers) localStorage.setItem('sys_teachers', JSON.stringify(importedJson.sys_teachers));
+                if(importedJson.sys_blacklist) localStorage.setItem('sys_blacklist', JSON.stringify(importedJson.sys_blacklist));
+                if(importedJson.sys_student_registry) localStorage.setItem('sys_student_registry', JSON.stringify(importedJson.sys_student_registry));
+                if(importedJson.sys_main_notice !== undefined) localStorage.setItem('sys_main_notice', importedJson.sys_main_notice);
+                if(importedJson.sys_main_notice_size) localStorage.setItem('sys_main_notice_size', importedJson.sys_main_notice_size);
+                if(importedJson.sys_main_notice_color) localStorage.setItem('sys_main_notice_color', importedJson.sys_main_notice_color);
+
+                loadFromLocalStorageDB();
+                buildTeacherFrontGrid();
+                
+                logAdminActivity("설정 데이터 전면 복원 완료");
+                alert("🎉 전체 환경 및 백업 설정이 실시간으로 동기화 및 전면 복구되었습니다!");
+                fileInput.value = "";
+                backToDashboard();
+            } catch(err) {
+                alert("허용되지 않은 JSON 규격이거나 깨진 압축 구조 파일입니다.");
+            }
+        };
+        reader.readAsText(fileInput.files[0]);
+    }
+
+    function renderAdminActivityLog() {
+        const box = document.getElementById('adminActivityLogBox');
+        const logs = JSON.parse(localStorage.getItem('sys_admin_activity_log') || '[]');
+        if(logs.length === 0) {
+            box.innerHTML = '<div style="padding:20px; color:#94a3b8; text-align:center;">기록된 감사 추적 내역이 존재하지 않습니다.</div>';
+            return;
+        }
+        box.innerHTML = logs.map(l => `
+            <div style="padding:10px 6px; border-bottom:1px dashed #334155; font-family:monospace !important; font-size:0.88rem; line-height:1.4;">
+                <span style="color:#38bdf8; font-weight:bold; margin-right:6px;">[SYSTEM]</span> ${l}
+            </div>
+        `).join('');
+    }
+
+    function clearAdminActivityLog() {
+        if(confirm("모든 보안 제어 추적 로그를 영구 삭제합니까?")) {
+            localStorage.setItem('sys_admin_activity_log', '[]');
+            renderAdminActivityLog();
+        }
+    }
+
+    function renderMainNoticeInput() {
+        document.getElementById('mainNoticeInputText').value = localStorage.getItem('sys_main_notice') || '';
+        document.getElementById('mainNoticeSize').value = localStorage.getItem('sys_main_notice_size') || '0.95rem';
+        
+        const colorVal = localStorage.getItem('sys_main_notice_color') || '#c2410c';
+        document.getElementById('mainNoticeColor').value = colorVal;
+        document.getElementById('mainNoticeColorHex').value = colorVal;
+    }
+
+    function saveMainNoticeMessage() {
+        const txt = document.getElementById('mainNoticeInputText').value;
+        const size = document.getElementById('mainNoticeSize').value;
+        const color = document.getElementById('mainNoticeColor').value;
+        
+        localStorage.setItem('sys_main_notice', txt);
+        localStorage.setItem('sys_main_notice_size', size);
+        localStorage.setItem('sys_main_notice_color', color);
+        
+        updateMainNoticeDisplay();
+        logAdminActivity("공지사항 및 스타일 속성 변경");
+        alert("메인 공지사항 설정 스케줄링이 실시간 갱신되었습니다.");
+        backToDashboard();
+    }
+
+    function sendTestCall() {
+        const testTeacher = data.t || '김선미'; 
+        const payload = { teacher: testTeacher, id: "21145", name: "테스트", purpose: "시스템 테스트", image: "" };
+
+        fetch(GAS_URL, { method: "POST", mode: "no-cors", headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }).catch(e => console.log(e));
+        alert(`[${testTeacher} 선생님]께 테스트 호출 신호(11반 45번 테스트)를 전송했습니다!`);
     }
 
     function go(p) { 
@@ -372,8 +1097,15 @@
         if(p === 4) startCountdown();
     }
     
-    const teachers = ['김선미', '김현민', '김지안', '방지수', '신주원', '안예슬', '유진선', '윤희연', '이희진', '진경훈', '최대한'];
-    teachers.forEach(t => document.getElementById('teacherGrid').innerHTML += `<div class="btn-opt" onclick="sel('t','${t}')">${t}</div>`);
+    function buildTeacherFrontGrid() {
+        const grid = document.getElementById('teacherGrid');
+        grid.innerHTML = "";
+        dynamicTeachers.forEach(t => grid.innerHTML += `<div class="btn-opt" onclick="sel('t','${t}')">${t}</div>`);
+    }
+
+    loadFromLocalStorageDB();
+    buildTeacherFrontGrid();
+
     for(let i=1; i<=10; i++) document.getElementById('classGrid').innerHTML += `<div class="btn-opt" onclick="sel('b','${i}')">${i}반</div>`;
     for(let i=1; i<=35; i++) document.getElementById('numGrid').innerHTML += `<div class="btn-opt" onclick="sel('n','${i}')">${i}번</div>`;
     ['질문', '제출', '상담', '기타'].forEach(p => document.getElementById('purposeGrid').innerHTML += `<div class="btn-opt" onclick="sel('p','${p}')">${p}</div>`);
@@ -384,6 +1116,19 @@
         data[k] = v;
         if(k==='t') document.getElementById('n1').disabled = false;
         
+        if(k==='b' || k==='n') {
+            if(data.b && data.n) {
+                const sid = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
+                if(studentRegistry[sid]) {
+                    document.getElementById('nameInp').value = studentRegistry[sid];
+                    data.name = studentRegistry[sid];
+                } else {
+                    document.getElementById('nameInp').value = "";
+                    data.name = "";
+                }
+            }
+        }
+
         if(k==='p') {
             const customBox = document.getElementById('customPurpose');
             if(v === '기타') {
@@ -410,6 +1155,15 @@
         const btn = document.getElementById('longPressBtn');
         const sid = `2${data.b.padStart(2,'0')}${data.n.padStart(2,'0')}`;
         
+        const checkBlack = blacklistStorage.find(b => b.id === sid);
+        if(checkBlack) {
+            alert(`[호출 차단 알림]\n해당 학번은 현재 허위 호출 제재 조치 중입니다.\n기간 내 시스템 사용이 엄격히 제한됩니다.`);
+            chk.checked = false;
+            btn.classList.add('disabled');
+            cleanReset();
+            return;
+        }
+
         if(chk.checked) {
             if (localStorage.getItem('lc_'+sid) && new Date().getTime() - localStorage.getItem('lc_'+sid) < 600000) {
                 alert("10분 뒤 재호출 가능합니다.");
@@ -453,29 +1207,15 @@
         const finalPurpose = data.p === '기타' ? `기타(${data.customP})` : data.p;
         localStorage.setItem('lc_'+id, new Date().getTime());
 
-        const payload = {
-            teacher: data.t,
-            id: id,
-            name: data.name,
-            purpose: finalPurpose, 
-            image: data.img 
-        };
+        studentRegistry[id] = data.name;
+        saveToLocalStorageDB('sys_student_registry', studentRegistry);
 
-        systemLogCache.unshift({
-            teacher: data.t,
-            id: id,
-            name: data.name,
-            purpose: finalPurpose,
-            timestamp: Date.now()
-        });
-        if(systemLogCache.length > 10) systemLogCache.pop();
+        const payload = { teacher: data.t, id: id, name: data.name, purpose: finalPurpose, image: data.img };
 
-        fetch(GAS_URL, { 
-            method: "POST", 
-            mode: 'no-cors', 
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload) 
-        }).catch(err => console.log(err));
+        systemLogCache.unshift({ teacher: data.t, id: id, name: data.name, purpose: finalPurpose, timestamp: new Date().toISOString().replace('T',' ').slice(0,19) });
+        if(systemLogCache.length > 20) systemLogCache.pop();
+
+        fetch(GAS_URL, { method: "POST", mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }).catch(err => console.log(err));
     }
 
     let pressTimer = null, progress = 0;
@@ -533,9 +1273,7 @@
         autoFallbackTimer = setInterval(() => {
             sec--;
             txt.innerText = sec + "초";
-            if(sec <= 0) {
-                cleanReset();
-            }
+            if(sec <= 0) { cleanReset(); }
         }, 1000);
     }
 
@@ -544,11 +1282,6 @@
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         
         const payload = JSON.stringify({ type: "clear_absent" });
-        if (navigator.sendBeacon) {
-            navigator.sendBeacon(GAS_URL, payload);
-            location.reload();
-            return;
-        }
         try {
             await fetch(GAS_URL, {
                 method: "POST",
@@ -556,7 +1289,9 @@
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: payload
             });
+            await new Promise(resolve => setTimeout(resolve, 600));
         } catch(e) { console.log(e); }
+        
         location.reload();
     }
 
@@ -572,26 +1307,26 @@
         getBestKoVoice();
     }
 
-    // 📡 [부재중 폴링 루프 인터럽트 안전화 차단 해제]
     async function checkAbsentSignalLoop() {
+        if (isAbsentTriggered) return;
+
         try {
             const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
             const textData = await res.text();
             let d = JSON.parse(textData);
             
             if (d && (d.type === "absent" || d.purpose === "부재중" || d.type === "ABSENT_ALERT") && d.teacher) {
+                isAbsentTriggered = true; 
                 triggerAbsentScreen(d.teacher);
-                return; // 부재중 화면 전환 시 루프 정지
+                return;
             }
-        } catch(e) { 
-            console.log("부재중 시그널 대기 피드백 처리 중..."); 
-        }
-        
-        // 에러가 나든 처리가 안 되든 무조건 800ms 뒤 다음 루프 체인을 강제 재생성하여 루프가 끊기는 현상 차단
+        } catch(e) { console.log("부재중 피드백 대기중..."); }
         setTimeout(checkAbsentSignalLoop, 800);
     }
 
     function triggerAbsentScreen(teacherName) {
+        if(autoFallbackTimer) clearInterval(autoFallbackTimer); 
+
         const overlay = document.getElementById('absentOverlay');
         document.getElementById('absentMsg').innerHTML = `<span style="font-size:2.8rem; font-weight:900; background:rgba(0,0,0,0.2); padding:4px 15px; border-radius:12px;">${teacherName}</span> 선생님은<br>현재 부재중이십니다.`;
         overlay.style.display = "flex";
@@ -600,17 +1335,30 @@
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             const ctx = new AudioContext();
             const now = ctx.currentTime;
-            const playTone = (freq, time) => {
-                const osc = ctx.createOscillator(); const gain = ctx.createGain();
-                osc.type = 'sine'; osc.frequency.setValueAtTime(freq, time);
-                gain.gain.setValueAtTime(0, time); 
-                gain.gain.linearRampToValueAtTime(0.9, time + 0.05); 
-                gain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
-                osc.connect(gain); gain.connect(ctx.destination);
-                osc.start(time); osc.stop(time + 0.4);
+            
+            const playStrongTone = (freq, startTime, duration) => {
+                const osc = ctx.createOscillator(); 
+                const gain = ctx.createGain();
+                
+                osc.type = 'sine'; 
+                osc.frequency.setValueAtTime(freq, startTime);
+                
+                gain.gain.setValueAtTime(0, startTime); 
+                gain.gain.linearRampToValueAtTime(0.95, startTime + 0.02); 
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+                
+                osc.connect(gain); 
+                gain.connect(ctx.destination);
+                
+                osc.start(startTime); 
+                osc.stop(startTime + duration);
             };
-            playTone(698.46, now); playTone(698.46, now + 0.15); 
-        } catch(e) {}
+
+            playStrongTone(1400, now, 0.3);       
+            playStrongTone(1650, now + 0.15, 0.4); 
+            playStrongTone(1400, now + 0.5, 0.3);       
+            playStrongTone(1650, now + 0.65, 0.4); 
+        } catch(e) { console.log(e); }
 
         setTimeout(() => {
             if ('speechSynthesis' in window) {
@@ -618,18 +1366,22 @@
                 const uttr = new SpeechSynthesisUtterance(`${teacherName} 선생님은 현재 부재중이십니다.`);
                 if(koVoice) uttr.voice = koVoice;
                 uttr.lang = 'ko-KR'; 
-                uttr.rate = 1.05;
+                uttr.rate = 1.02;
                 
-                uttr.onend = function() {
-                    setTimeout(() => { cleanReset(); }, 500); 
-                };
+                uttr.onend = function() { setTimeout(() => { cleanReset(); }, 500); };
                 window.speechSynthesis.speak(uttr);
             }
         }, 400);
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-        checkAbsentSignalLoop();
+    window.addEventListener('DOMContentLoaded', () => { 
+        checkAbsentSignalLoop(); 
+        
+        document.getElementById('mainNoticeColor').addEventListener('input', function() {
+            document.getElementById('mainNoticeColorHex').value = this.value;
+        });
+        
+        updateLockoutTimerVisual();
     });
 
     holdBtn.addEventListener('mousedown', startPress);
