@@ -64,9 +64,9 @@
         .settings-btn { position: absolute; top: 25px; right: 25px; background: #f1f5f9; border: none; padding: 10px 16px; border-radius: 12px; color: #475569; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; z-index: 500; }
         .settings-btn:hover { background: #e2e8f0; color: #1e293b; }
 
-        /* 🔒 관리자용 테스트 모달 패널 및 키패드 구조 */
+        /* 🔒 관리자 제어 모달 메인 프레임 */
         #adminModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 1000000; display: none; justify-content: center; align-items: center; padding: 20px; }
-        .admin-box { background: white; border-radius: 24px; padding: 30px; width: 100%; max-width: 360px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); text-align: center; animation: modalUp 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+        .admin-box { background: white; border-radius: 24px; padding: 30px; width: 100%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); text-align: center; animation: modalUp 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes modalUp { from { transform: scale(0.9) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
         
         .pin-display { font-size: 2rem; font-weight: bold; letter-spacing: 10px; margin: 15px 0; color: #1e293b; height: 40px; }
@@ -74,16 +74,26 @@
         .pad-btn { background: #f1f5f9; border: none; padding: 18px 0; border-radius: 14px; font-size: 1.4rem; font-weight: bold; color: #334155; cursor: pointer; transition: 0.1s; }
         .pad-btn:active { background: #cbd5e1; }
         .pad-btn.danger { background: #fee2e2; color: #ef4444; }
-        .pad-btn.danger:active { background: #fca5a5; }
 
-        .confirm-btn-box { display: flex; gap: 10px; margin-top: 20px; }
-        .conf-btn { flex: 1; padding: 16px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; border: none; cursor: pointer; }
+        /* 📋 관리자 메뉴 전용 직사각형 분할 버튼 UI */
+        .admin-menu-container { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; }
+        .admin-rect-btn { display: flex; align-items: center; gap: 15px; background: #f8fafc; border: 2px solid #e2e8f0; padding: 20px; border-radius: 16px; cursor: pointer; transition: 0.2s; text-align: left; width: 100%; }
+        .admin-rect-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
+        .admin-rect-btn .menu-icon { font-size: 2.2rem; background: white; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .admin-rect-btn .menu-text { display: flex; flex-direction: column; }
+        .admin-rect-btn .menu-title { font-size: 1.2rem; font-weight: bold; color: #1e293b; }
+        .admin-rect-btn .menu-subtitle { font-size: 0.85rem; color: #64748b; margin-top: 2px; }
+
+        /* 로그 히스토리 오버레이 뷰어 */
+        #logViewer { max-height: 200px; overflow-y: auto; text-align: left; margin: 15px 0; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; font-size: 0.85rem; display: none; background: #f8fafc; }
+        .log-row { padding: 6px 0; border-bottom: 1px dashed #e2e8f0; color: #334155; display: flex; justify-content: space-between; }
+        .log-row:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <button class="settings-btn" onclick="openAdmin()">⚙️ 설정</button>
+    <button id="mainSettingsBtn" class="settings-btn" onclick="openAdmin()">⚙️ 설정</button>
 
     <div id="page0" class="page active">
         <div class="welcome-box">
@@ -178,19 +188,31 @@
         </div>
     </div>
     
-    <div class="admin-box" id="stepConfirm" style="display:none;">
-        <h2 style="margin:0; color:#2563eb; font-size:1.5rem;">⚙️ 테스트 시스템</h2>
-        <div class="subtitle" style="margin:15px 0 25px 0; font-size:1.1rem; line-height:1.5; color:#334155;">
-            대시보드로 원격 <strong>[테스트 알림]</strong>을<br>전송하시겠습니까?
+    <div class="admin-box" id="stepControlDashboard" style="display:none; max-width: 440px;">
+        <h2 style="margin:0; color:#2563eb; font-size:1.5rem; font-weight:900;">⚙️ 관리자 시스템 제어판</h2>
+        <div class="subtitle" style="margin-bottom:15px;">요청할 작업을 선택해 주세요.</div>
+        
+        <div class="admin-menu-container">
+            <button class="admin-rect-btn" onclick="sendTestCall()">
+                <div class="menu-icon">🔔</div>
+                <div class="menu-text">
+                    <span class="menu-title">테스트 알림 전송</span>
+                    <span class="menu-subtitle">11반 45번 테스트 신호를 전송합니다.</span>
+                </div>
+            </button>
+
+            <button class="admin-rect-btn" onclick="toggleLogViewer()">
+                <div class="menu-icon">📋</div>
+                <div class="menu-text">
+                    <span class="menu-title">전송 로그 확인</span>
+                    <span class="menu-subtitle">가장 최근 전송된 이력을 대조합니다.</span>
+                </div>
+            </button>
         </div>
-        <div style="text-align:left; background:#f8fafc; padding:12px; border-radius:8px; font-size:0.85rem; color:#64748b; margin-bottom:15px;">
-            • 대상 교사: 선택된 교사 (또는 김선미 교사)<br>
-            • 전송 정보: 21145 테스트
-        </div>
-        <div class="confirm-btn-box">
-            <button class="conf-btn" style="background:#f1f5f9; color:#475569;" onclick="closeAdmin()">아니오</button>
-            <button class="conf-btn" style="background:#2563eb; color:white;" onclick="sendTestCall()">예</button>
-        </div>
+
+        <div id="logViewer"></div>
+
+        <button class="bottom-home-btn" style="margin-top:10px; padding:14px;" onclick="closeAdmin()">제어판 닫기</button>
     </div>
 </div>
 
@@ -198,23 +220,22 @@
 <canvas id="hiddenCanvas" width="480" height="640" style="display:none;"></canvas>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbymAMka5LCDljjstXphO4Q_GF1NKx_4RZpKLS8w-2SNVqzf2G_ie4uJnabQTJWKBA4O2A/exec"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwQd_Y-13sGimR7bW8lFsH1PKYTPD3AYv9eB-9DbKEW5qvnx7Ec0XatMwKOnje-eR9Jsg/exec"; 
     
     let data = { t:'', b:'', n:'', name:'', p:'', customP:'', img:'' };
     let videoStream = null;
     let isSubmitted = false;
     let autoFallbackTimer = null;
     let absentAutoTimer = null; 
-    let lastAbsentTime = 0; 
+    let lastAbsentTime = Date.now(); 
     let koVoice = null;
-
-    // 🔒 관리자 제어 변수
     let inputtedPin = "";
 
     function openAdmin() {
         clearPin();
+        document.getElementById('logViewer').style.display = 'none';
         document.getElementById('stepPin').style.display = 'block';
-        document.getElementById('stepConfirm').style.display = 'none';
+        document.getElementById('stepControlDashboard').style.display = 'none';
         document.getElementById('adminModal').style.display = 'flex';
     }
 
@@ -230,9 +251,9 @@
         
         if(inputtedPin.length === 4) {
             setTimeout(() => {
-                if(inputtedPin === "1837") { // 🔒 마스터 코드 검증
+                if(inputtedPin === "1837") { 
                     document.getElementById('stepPin').style.display = 'none';
-                    document.getElementById('stepConfirm').style.display = 'block';
+                    document.getElementById('stepControlDashboard').style.display = 'block';
                 } else {
                     alert("비밀번호가 올바르지 않습니다.");
                     clearPin();
@@ -250,8 +271,8 @@
         const testTeacher = data.t || '김선미'; 
         const payload = {
             teacher: testTeacher,
-            id: "21145",            // 📌 11반 45번 커스텀 ID 세팅
-            name: "테스트",         // 📌 이름 매핑
+            id: "21145",            
+            name: "테스트",         
             purpose: "시스템 테스트",
             image: ""
         };
@@ -263,13 +284,49 @@
             body: JSON.stringify(payload)
         }).catch(e => console.log(e));
 
-        closeAdmin();
         alert(`[${testTeacher} 선생님]께 테스트 호출 신호(11반 45번 테스트)를 전송했습니다!`);
     }
 
+    async function toggleLogViewer() {
+        const viewer = document.getElementById('logViewer');
+        if(viewer.style.display === 'block') {
+            viewer.style.display = 'none';
+            return;
+        }
+        
+        viewer.innerHTML = "로그 데이터를 불러오는 중...";
+        viewer.style.display = 'block';
+
+        try {
+            const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
+            const d = await res.json();
+            if(d && d.name) {
+                viewer.innerHTML = `
+                    <div class="log-row"><strong>교사:</strong> <span>${d.teacher}</span></div>
+                    <div class="log-row"><strong>학번/이름:</strong> <span>${d.id} ${d.name}</span></div>
+                    <div class="log-row"><strong>목적:</strong> <span>${d.purpose}</span></div>
+                `;
+            } else {
+                viewer.innerHTML = "기록된 전송 내역이 비어 있습니다.";
+            }
+        } catch(e) {
+            viewer.innerHTML = "로그를 가져오는 과정에서 오류가 발생했습니다.";
+        }
+    }
+
+    // ⚙️ 페이지 이동 및 상단 설정 버튼 노출 최적화 동적 제어 함수
     function go(p) { 
         document.querySelectorAll('.page').forEach(el => el.classList.remove('active')); 
         document.getElementById('page'+p).classList.add('active'); 
+        
+        // 오직 메인 화면(p === 0)일 때만 설정 버튼이 노출되도록 제어
+        const configBtn = document.getElementById('mainSettingsBtn');
+        if(p === 0) {
+            configBtn.style.display = 'flex';
+        } else {
+            configBtn.style.display = 'none';
+        }
+
         if(p === 3) initSilentCamera();
         if(p === 4) startCountdown();
     }
@@ -468,17 +525,19 @@
         getBestKoVoice();
     }
 
+    // 📡 [부재중 연동 버그 픽스] 대시보드 구조에 맞춰 실시간으로 수신받도록 보정된 비동기 루프
     function checkAbsentSignalLoop() {
         setInterval(async () => {
             try {
-                const res = await fetch(`${GAS_URL}?type=check_absent&v=${Date.now()}`);
+                const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
                 const d = await res.json();
-                if (d && d.type === "ABSENT_ALERT" && Number(d.timestamp) > lastAbsentTime) {
-                    lastAbsentTime = Number(d.timestamp);
+                
+                // 대시보드 상태가 부재중(type) 액션을 발생시켰을 때 즉시 감동의 이벤트 구동
+                if (d && d.type === "absent" && d.teacher) {
                     triggerAbsentScreen(d.teacher);
                 }
-            } catch(e) { console.log("부재중 체크 동기화 대기 중..."); }
-        }, 500);
+            } catch(e) { console.log("부재중 시그널 대기 중..."); }
+        }, 600);
     }
 
     function triggerAbsentScreen(teacherName) {
