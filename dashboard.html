@@ -3,228 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>교무실 호출 대시보드</title>
+    <title>호출 대시보드 - 선생님용</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy.css" type="text/css"/>
     <style>
-        * { font-family: 'Paperlogy', sans-serif !important; box-sizing: border-box; }
-        body { margin: 0; padding: 20px; background-color: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; }
-        header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 2px solid #1e293b; margin-bottom: 20px; }
-        h1 { margin: 0; font-size: 2rem; color: #38bdf8; font-weight: 900; }
-        .status-badge { background: #1e293b; padding: 8px 16px; border-radius: 50px; font-size: 0.95rem; color: #94a3b8; font-weight: bold; display: flex; align-items: center; gap: 8px; }
-        .status-dot { width: 10px; height: 10px; background: #10b981; border-radius: 50%; animation: blink 1.5s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+        * { font-family: 'Paperlogy', sans-serif !important; margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f8fafc; padding: 40px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        #startLayer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .start-btn { background: #2563eb; color: white; padding: 25px 60px; border-radius: 20px; font-size: 2rem; border: none; cursor: pointer; font-weight: bold; box-shadow: 0 10px 30px rgba(37,99,235,0.3); }
+        .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
         
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; flex: 1; align-content: start; }
-        .card { background: #1e293b; border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid #334155; display: flex; flex-direction: column; animation: slideIn 0.3s ease; position: relative; overflow: hidden; }
-        @keyframes slideIn { from { transform: translateY(15px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .alert-card { background: white; border-radius: 40px; padding: 60px; text-align: left; box-shadow: 0 30px 60px rgba(0,0,0,0.1); display: none; flex-direction: column; justify-content: center; flex: 1; margin-bottom: 20px; border: 3px solid #2563eb; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
-        .teacher-tag { background: #38bdf8; color: #0f172a; padding: 6px 14px; border-radius: 10px; font-weight: 900; font-size: 1.1rem; }
-        .time-tag { color: #64748b; font-size: 0.85rem; font-weight: bold; }
+        .alert-left { width: 100%; display: flex; flex-direction: column; justify-content: center; }
+        .t-name { font-size: 5rem; font-weight: 900; color: #0f172a; margin: 20px 0; }
+        .info-box { background: #f1f5f9; padding: 40px; border-radius: 30px; font-size: 3.2rem; font-weight: bold; line-height: 1.5; margin-bottom: 30px; }
         
-        .student-info { font-size: 1.6rem; font-weight: 800; color: #f1f5f9; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
-        .student-id { font-size: 1.1rem; color: #38bdf8; background: rgba(56, 189, 248, 0.15); padding: 2px 8px; border-radius: 6px; font-weight: bold; }
-        .purpose { background: #2d3748; padding: 12px 15px; border-radius: 12px; font-size: 1.05rem; color: #cbd5e1; line-height: 1.4; margin-bottom: 15px; font-weight: 600; border-left: 4px solid #f59e0b; }
-        
-        .photo-box { width: 100%; height: 180px; background: #0f172a; border-radius: 12px; overflow: hidden; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; border: 1px solid #334155; }
-        .photo-box img { width: 100%; height: 100%; object-fit: cover; }
-        .no-photo { color: #475569; font-size: 0.9rem; font-weight: bold; }
-        
-        .btn-group { display: flex; gap: 10px; margin-top: auto; }
-        .btn { flex: 1; padding: 12px; border: none; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; }
-        .btn-complete { background: #10b981; color: white; }
-        .btn-complete:hover { background: #059669; }
-        .btn-absent { background: #ef4444; color: white; }
-        .btn-absent:hover { background: #dc2626; }
-        
-        .empty-state { grid-column: 1 / -1; text-align: center; padding: 100px 20px; color: #475569; font-size: 1.5rem; font-weight: bold; }
+        .absent-btn { background: #dc2626; color: white; padding: 22px; border-radius: 20px; font-size: 2rem; font-weight: bold; border: none; cursor: pointer; width: 100%; text-align: center; box-shadow: 0 5px 15px rgba(220,38,38,0.3); transition: background 0.2s; }
+        .absent-btn:hover { background: #b91c1c; }
+
+        .history-item { background: white; padding: 15px; border-radius: 15px; margin-top: 10px; display: flex; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-size: 1.2rem; font-weight: bold; color: #334155; border-left: 5px solid #cbd5e0; }
     </style>
 </head>
 <body>
-
-<header>
-    <div>
-        <h1>🏫 교무실 실시간 호출 대시보드</h1>
-        <div style="color: #64748b; margin-top: 5px; font-size: 0.95rem;">학생들의 호출 현황을 실시간으로 관리합니다.</div>
-    </div>
-    <div class="status-badge">
-        <div class="status-dot"></div>
-        <span id="syncText">실시간 동기화 중</span>
-    </div>
-</header>
-
-<div class="grid" id="cardGrid">
-    <div class="empty-state">현재 대기 중인 호출이 없습니다.</div>
+<div id="startLayer">
+    <button class="start-btn" onclick="initSystem()">수신 시작하기</button>
 </div>
+<div class="header">
+    <div style="color:#2563eb; font-weight:bold; font-size:1.5rem;">● 실시간 모니터링 중</div>
+    <div id="clock" style="font-size:1.5rem;">00:00:00</div>
+</div>
+<div id="empty" style="flex:1; display:flex; justify-content:center; align-items:center; font-size:2rem; color:#cbd5e0;">대기 중...</div>
+
+<div class="alert-card" id="card">
+    <div class="alert-left">
+        <div style="color:#2563eb; font-size:1.8rem; font-weight:bold;">지금 호출한 선생님</div>
+        <div class="t-name" id="tName">---</div>
+        <div class="info-box"><span id="sInfo">학번 성함</span><br><span id="sPurp" style="color:#2563eb;">목적</span></div>
+        <button class="absent-btn" id="absentBtn">선생님 부재중 전송</button>
+    </div>
+</div>
+
+<div id="historyList" style="margin-top:20px;"></div>
 
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwQd_Y-13sGimR7bW8lFsH1PKYTPD3AYv9eB-9DbKEW5qvnx7Ec0XatMwKOnje-eR9Jsg/exec";
-    let activeCalls = [];
-    let processedIds = new Set();
-    let isFirstLoad = true;
+    let lastTime = Date.now(), historyList = [];
+    let koVoice = null, autoCloseTimer = null;
 
-    // 🔊 [선명하고 웅장한 '딩-동-' 오디오 합성 차임벨] 함수
-    function playClearChime() {
+    function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }
+    setInterval(updateClock, 1000);
+
+    function getBestKoVoice() {
+        if (!('speechSynthesis' in window)) return;
+        const voices = window.speechSynthesis.getVoices();
+        koVoice = voices.find(v => v.lang.includes('ko') && v.name.includes('Google')) || 
+                  voices.find(v => v.lang.includes('ko') && v.name.includes('Natural')) ||
+                  voices.find(v => v.lang.includes('ko'));
+    }
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = getBestKoVoice;
+        getBestKoVoice();
+    }
+
+    async function initSystem() {
+        document.getElementById('startLayer').style.display = 'none';
+        getBestKoVoice();
+        
+        const initialSilent = new Audio('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg');
+        initialSilent.volume = 0;
+        initialSilent.play().catch(e => console.log(e));
+
+        try {
+            const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
+            const d = await res.json();
+            // 부재중 알림 데이터 구조가 아닐 때만 타임스탬프 셋
+            if(d && d.timestamp && d.type !== "ABSENT_ALERT") lastTime = Number(d.timestamp);
+        } catch(e) { lastTime = Date.now(); }
+        
+        checkCallDynamic(); 
+    }
+
+    async function checkCallDynamic() {
+        try {
+            const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
+            const d = await res.json();
+            
+            // 🔒 [보안 필터] 들어온 최신 데이터가 부재중 신호(ABSENT_ALERT)라면 대시보드 리드 룹에서 무조건 패스
+            if (d && d.type === "ABSENT_ALERT") {
+                setTimeout(checkCallDynamic, 400);
+                return;
+            }
+
+            if(d && d.timestamp && Number(d.timestamp) > lastTime) {
+                lastTime = Number(d.timestamp);
+                notify(d);
+            }
+        } catch(e) { console.log("조회 대기 중..."); }
+        setTimeout(checkCallDynamic, 400); 
+    }
+
+    function notify(d) {
+        // 유효하지 않은 호출이거나 데이터 누락 시 조용히 넘김
+        if(!d || !d.name || !d.teacher) return;
+
+        clearTimeout(autoCloseTimer);
+        
+        document.getElementById('empty').style.display = 'none';
+        const card = document.getElementById('card');
+        
+        document.getElementById('tName').innerText = d.teacher + " 선생님";
+        document.getElementById('sInfo').innerText = d.id + " " + d.name;
+        document.getElementById('sPurp').innerText = d.purpose;
+        
+        card.style.display = "flex"; 
+
+        // 🔊 [우렁차고 명확한 '딩-동-' 차임벨 재생 엔진 적용]
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContext) return;
-            const ctx = new AudioContext();
-            const now = ctx.currentTime;
+            if (AudioContext) {
+                const ctx = new AudioContext();
+                const now = ctx.currentTime;
 
-            // 1. 첫 번째 음: '딩' (높고 맑은 톤, 주파수 880Hz - A5)
-            const osc1 = ctx.createOscillator();
-            const gain1 = ctx.createGain();
-            osc1.type = 'sine';
-            osc1.frequency.setValueAtTime(880, now); 
-            
-            // 볼륨 증폭 (볼륨 인자를 대폭 상향 조정하여 크게 들리도록 설정)
-            gain1.gain.setValueAtTime(0, now);
-            gain1.gain.linearRampToValueAtTime(1.5, now + 0.02); 
-            gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-            
-            osc1.connect(gain1);
-            gain1.connect(ctx.destination);
-            osc1.start(now);
-            osc1.stop(now + 0.6);
+                // 1. 첫 번째 고음 톤: '딩' (주파수 880Hz)
+                const osc1 = ctx.createOscillator();
+                const gain1 = ctx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(880, now);
+                
+                // 볼륨 감쇠 계수를 크게 보정하여 시끄러운 교무실에서도 선명히 들리도록 튜닝
+                gain1.gain.setValueAtTime(0, now);
+                gain1.gain.linearRampToValueAtTime(1.4, now + 0.02);
+                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                
+                osc1.connect(gain1); gain1.connect(ctx.destination);
+                osc1.start(now); osc1.stop(now + 0.6);
 
-            // 2. 두 번째 음: '동' (안정적인 저음 톤, 주파수 554.37Hz - C#5)
-            const osc2 = ctx.createOscillator();
-            const gain2 = ctx.createGain();
-            osc2.type = 'sine';
-            osc2.frequency.setValueAtTime(554.37, now + 0.25); // 0.25초 뒤 엇박자로 재생
-            
-            gain2.gain.setValueAtTime(0, now + 0.25);
-            gain2.gain.linearRampToValueAtTime(1.5, now + 0.27);
-            gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
-            
-            osc2.connect(gain2);
-            gain2.connect(ctx.destination);
-            osc2.start(now + 0.25);
-            osc2.stop(now + 0.9);
+                // 2. 두 번째 하향 톤: '동' (주파수 554.37Hz, 0.22초 뒤 발생)
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(554.37, now + 0.22);
+                
+                gain2.gain.setValueAtTime(0, now + 0.22);
+                gain2.gain.linearRampToValueAtTime(1.4, now + 0.24);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+                
+                osc2.connect(gain2); gain2.connect(ctx.destination);
+                osc2.start(now + 0.22); osc2.stop(now + 0.9);
+            }
+        } catch (e) { console.log(e); }
 
-        } catch (e) {
-            console.log("오디오 플레이어 오류 또는 브라우저 제한:", e);
-        }
+        // 🗣️ 알림음이 끝난 후 깨끗하게 이어지는 TTS 안내 방송
+        setTimeout(() => {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); 
+                const uttr = new SpeechSynthesisUtterance(`${d.teacher} 선생님, ${d.name} 학생이 호출했습니다.`);
+                if(koVoice) uttr.voice = koVoice; 
+                uttr.lang = 'ko-KR'; 
+                uttr.rate = 1.05; 
+                uttr.volume = 1.0; 
+                window.speechSynthesis.speak(uttr);
+            }
+        }, 650);
+
+        historyList.unshift(d); 
+        if(historyList.length > 3) historyList.pop();
+        document.getElementById('historyList').innerHTML = historyList.map(h => `<div class="history-item"><span>${h.id} ${h.name}</span><span>${h.purpose}</span></div>`).join('');
+
+        document.getElementById('absentBtn').onclick = () => {
+            clearTimeout(autoCloseTimer);
+            sendAbsentSignal(d.teacher);
+            closeCard();
+        };
+
+        autoCloseTimer = setTimeout(() => { 
+            closeCard();
+            fetch(GAS_URL, {
+                method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ type: "complete", id: d.id })
+            }).catch(err => console.log(err));
+        }, 10000);
     }
 
-    // 📡 실시간 대시보드 데이터 패치 룹
-    async function fetchDashboardData() {
-        try {
-            const res = await fetch(`${GAS_URL}?type=get_calls&v=${Date.now()}`);
-            const data = await res.json();
-            
-            document.getElementById('syncText').innerText = "실시간 동기화 중";
-            
-            // 🔒 [버그 픽스] 데이터 바인딩 시 부재중 알림 신호(ABSENT_ALERT)는 대시보드 내부 알림 트리거에서 엄격히 차단
-            if (data && data.type === "ABSENT_ALERT") {
-                return; 
-            }
-
-            if (Array.isArray(data)) {
-                activeCalls = data;
-                renderCards();
-            }
-        } catch (e) {
-            document.getElementById('syncText').innerText = "재연결 시도 중...";
-            console.log("네트워크 대기 중...");
-        }
+    function closeCard() {
+        const card = document.getElementById('card');
+        card.style.display = "none";
+        document.getElementById('empty').style.display = 'flex'; 
     }
 
-    function renderCards() {
-        const grid = document.getElementById('cardGrid');
-        if (activeCalls.length === 0) {
-            grid.innerHTML = '<div class="empty-state">현재 대기 중인 호출이 없습니다.</div>';
-            processedIds.clear();
-            isFirstLoad = false;
-            return;
-        }
-
-        let html = '';
-        let hasNewCall = false;
-
-        activeCalls.forEach(call => {
-            // 유니크 키 조합 생성 (학번 + 시간 기반)
-            const uniqueKey = `${call.id}_${call.timestamp}`;
-            
-            if (!processedIds.has(uniqueKey)) {
-                if (!isFirstLoad) {
-                    hasNewCall = true; // 새로운 호출 유입 감지
-                }
-                processedIds.add(uniqueKey);
-            }
-
-            const photoHtml = call.image 
-                ? `<div class="photo-box"><img src="data:image/jpeg;base64,${call.image}" alt="학생 인증 사진"></div>`
-                : `<div class="photo-box"><div class="no-photo">인증 사진 없음</div></div>`;
-
-            html += `
-                <div class="card" id="card_${call.id}">
-                    <div class="card-header">
-                        <span class="teacher-tag">${call.teacher} 쌤</span>
-                        <span class="time-tag">${call.time || '방금 전'}</span>
-                    </div>
-                    <div class="student-info">
-                        <span class="student-id">${call.id}</span>
-                        <span>${call.name}</span>
-                    </div>
-                    <div class="purpose">${call.purpose}</div>
-                    ${photoHtml}
-                    <div class="btn-group">
-                        <button class="btn btn-complete" onclick="handleAction('complete', '${call.id}', '${call.teacher}')">완료</button>
-                        <button class="btn btn-absent" onclick="handleAction('absent', '${call.id}', '${call.teacher}')">부재중</button>
-                    </div>
-                </div>
-            `;
-        });
-
-        grid.innerHTML = html;
-
-        // 🔔 신규 학생 호출 접수 시 웅장한 2단 차임벨 자동 구동
-        if (hasNewCall) {
-            playClearChime();
-        }
-        isFirstLoad = false;
+    function sendAbsentSignal(teacherName) {
+        fetch(GAS_URL, {
+          method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ type: "absent", teacher: teacherName })
+        }).catch(err => console.log(err));
     }
-
-    async function handleAction(actionType, studentId, teacherName) {
-        const card = document.getElementById(`card_${studentId}`);
-        if(card) card.style.opacity = '0.5';
-
-        try {
-            let payload = {};
-            if (actionType === 'complete') {
-                payload = { type: "delete_call", id: studentId };
-            } else if (actionType === 'absent') {
-                // 부재중 처리 시 학생 패드로 원격 신호 바인딩
-                payload = { type: "set_absent", teacher: teacherName };
-            }
-
-            await fetch(GAS_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(payload)
-            });
-
-            // 즉시 로컬 리렌더링 반영
-            activeCalls = activeCalls.filter(c => c.id !== studentId);
-            renderCards();
-        } catch (e) {
-            alert("처리 중 에러가 발생했습니다. 다시 시도해 주세요.");
-            if(card) card.style.opacity = '1';
-        }
-    }
-
-    // 0.5초 간격 초고속 패치 동기화 루프 작동
-    window.addEventListener('DOMContentLoaded', () => {
-        fetchDashboardData();
-        setInterval(fetchDashboardData, 500);
-        
-        // 브라우저 오디오 보안 정책 우회용 터치 트리거
-        window.addEventListener('click', () => {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            if(ctx.state === 'suspended') ctx.resume();
-        }, { once: true });
-    </script>
+</script>
 </body>
 </html>
