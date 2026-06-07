@@ -60,13 +60,11 @@
         .bottom-home-btn:hover { background: #e2e8f0; }
         .absent-home-pos { background: white !important; color: #dc2626 !important; font-size: 1.3rem !important; padding: 20px 50px !important; width: auto !important; border-radius: 50px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.2); pointer-events: auto !important; position: relative; z-index: 100000; }
 
-        /* ⚙️ 우측 상단 레이아웃 설정 버튼 UI */
         .settings-btn { position: absolute; top: 25px; right: 25px; background: #f1f5f9; border: none; padding: 10px 16px; border-radius: 12px; color: #475569; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; z-index: 500; }
         .settings-btn:hover { background: #e2e8f0; color: #1e293b; }
 
-        /* 🔒 관리자 제어 모달 메인 프레임 */
         #adminModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 1000000; display: none; justify-content: center; align-items: center; padding: 20px; }
-        .admin-box { background: white; border-radius: 24px; padding: 30px; width: 100%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); text-align: center; animation: modalUp 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+        .admin-box { background: white; border-radius: 24px; padding: 30px; width: 100%; max-width: 440px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); text-align: center; animation: modalUp 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes modalUp { from { transform: scale(0.9) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
         
         .pin-display { font-size: 2rem; font-weight: bold; letter-spacing: 10px; margin: 15px 0; color: #1e293b; height: 40px; }
@@ -75,7 +73,6 @@
         .pad-btn:active { background: #cbd5e1; }
         .pad-btn.danger { background: #fee2e2; color: #ef4444; }
 
-        /* 📋 관리자 메뉴 전용 직사각형 분할 버튼 UI */
         .admin-menu-container { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; }
         .admin-rect-btn { display: flex; align-items: center; gap: 15px; background: #f8fafc; border: 2px solid #e2e8f0; padding: 20px; border-radius: 16px; cursor: pointer; transition: 0.2s; text-align: left; width: 100%; }
         .admin-rect-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
@@ -84,10 +81,10 @@
         .admin-rect-btn .menu-title { font-size: 1.2rem; font-weight: bold; color: #1e293b; }
         .admin-rect-btn .menu-subtitle { font-size: 0.85rem; color: #64748b; margin-top: 2px; }
 
-        /* 로그 히스토리 오버레이 뷰어 */
-        #logViewer { max-height: 200px; overflow-y: auto; text-align: left; margin: 15px 0; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; font-size: 0.85rem; display: none; background: #f8fafc; }
-        .log-row { padding: 6px 0; border-bottom: 1px dashed #e2e8f0; color: #334155; display: flex; justify-content: space-between; }
-        .log-row:last-child { border-bottom: none; }
+        #logViewer { max-height: 250px; overflow-y: auto; text-align: left; margin: 15px 0; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; font-size: 0.85rem; display: none; background: #f8fafc; }
+        .log-item { padding: 10px; border-bottom: 1px dashed #cbd5e1; line-height: 1.4; color: #334155; }
+        .log-item:last-child { border-bottom: none; }
+        .log-tag { display: inline-block; background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-right: 5px; font-size: 0.75rem; }
     </style>
 </head>
 <body>
@@ -204,8 +201,8 @@
             <button class="admin-rect-btn" onclick="toggleLogViewer()">
                 <div class="menu-icon">📋</div>
                 <div class="menu-text">
-                    <span class="menu-title">전송 로그 확인</span>
-                    <span class="menu-subtitle">가장 최근 전송된 이력을 대조합니다.</span>
+                    <span class="menu-title">전송 로그 확인 (최근 5개)</span>
+                    <span class="menu-subtitle">가장 최근 전송된 내역 5개를 불러옵니다.</span>
                 </div>
             </button>
         </div>
@@ -227,9 +224,9 @@
     let isSubmitted = false;
     let autoFallbackTimer = null;
     let absentAutoTimer = null; 
-    let lastAbsentTime = Date.now(); 
     let koVoice = null;
     let inputtedPin = "";
+    let systemLogCache = [];
 
     function openAdmin() {
         clearPin();
@@ -294,32 +291,72 @@
             return;
         }
         
-        viewer.innerHTML = "로그 데이터를 불러오는 중...";
+        viewer.innerHTML = "<div style='text-align:center; padding:10px; color:#64748b;'>로그 데이터를 불러오는 중...</div>";
         viewer.style.display = 'block';
 
         try {
-            const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
-            const d = await res.json();
-            if(d && d.name) {
-                viewer.innerHTML = `
-                    <div class="log-row"><strong>교사:</strong> <span>${d.teacher}</span></div>
-                    <div class="log-row"><strong>학번/이름:</strong> <span>${d.id} ${d.name}</span></div>
-                    <div class="log-row"><strong>목적:</strong> <span>${d.purpose}</span></div>
-                `;
+            const res = await fetch(`${GAS_URL}?type=get_calls&v=${Date.now()}`);
+            let d = await res.json();
+            
+            if(d && !Array.isArray(d)) {
+                if(d.name) { d = [d]; } else { d = []; }
+            }
+
+            let combinedLogs = [...d, ...systemLogCache];
+            let uniqueLogs = [];
+            let seenKeys = new Set();
+
+            for (let log of combinedLogs) {
+                if(!log || !log.name) continue;
+                let key = `${log.id}_${log.timestamp || log.time}`;
+                if (!seenKeys.has(key)) {
+                    seenKeys.add(key);
+                    uniqueLogs.push(log);
+                }
+            }
+
+            let finalLogs = uniqueLogs.slice(0, 5);
+
+            if(finalLogs.length > 0) {
+                let html = '';
+                finalLogs.forEach((log, index) => {
+                    html += `
+                        <div class="log-item">
+                            <span class="log-tag">호출 ${index + 1}</span>
+                            <strong>교사:</strong> ${log.teacher} 쌤<br>
+                            <strong>학생:</strong> ${log.id} ${log.name}<br>
+                            <strong>사유:</strong> <span style="color:#2563eb;">${log.purpose}</span>
+                        </div>
+                    `;
+                });
+                viewer.innerHTML = html;
             } else {
-                viewer.innerHTML = "기록된 전송 내역이 비어 있습니다.";
+                viewer.innerHTML = "<div style='text-align:center; padding:10px; color:#94a3b8;'>최근 전송 이력이 비어있습니다.</div>";
             }
         } catch(e) {
-            viewer.innerHTML = "로그를 가져오는 과정에서 오류가 발생했습니다.";
+            if(systemLogCache.length > 0) {
+                let html = '';
+                systemLogCache.slice(0, 5).forEach((log, index) => {
+                    html += `
+                        <div class="log-item">
+                            <span class="log-tag">로컬 ${index + 1}</span>
+                            <strong>교사:</strong> ${log.teacher} 쌤<br>
+                            <strong>학생:</strong> ${log.id} ${log.name}<br>
+                            <strong>사유:</strong> <span style="color:#2563eb;">${log.purpose}</span>
+                        </div>
+                    `;
+                });
+                viewer.innerHTML = html;
+            } else {
+                viewer.innerHTML = "<div style='text-align:center; padding:10px; color:#ef4444;'>로그를 동기화하지 못했습니다. (서버 연결 불량)</div>";
+            }
         }
     }
 
-    // ⚙️ 페이지 이동 및 상단 설정 버튼 노출 최적화 동적 제어 함수
     function go(p) { 
         document.querySelectorAll('.page').forEach(el => el.classList.remove('active')); 
         document.getElementById('page'+p).classList.add('active'); 
         
-        // 오직 메인 화면(p === 0)일 때만 설정 버튼이 노출되도록 제어
         const configBtn = document.getElementById('mainSettingsBtn');
         if(p === 0) {
             configBtn.style.display = 'flex';
@@ -420,6 +457,15 @@
             image: data.img 
         };
 
+        systemLogCache.unshift({
+            teacher: data.t,
+            id: id,
+            name: data.name,
+            purpose: finalPurpose,
+            timestamp: Date.now()
+        });
+        if(systemLogCache.length > 10) systemLogCache.pop();
+
         fetch(GAS_URL, { 
             method: "POST", 
             mode: 'no-cors', 
@@ -491,17 +537,14 @@
 
     async function cleanReset() {
         if(autoFallbackTimer) clearInterval(autoFallbackTimer);
-        if(absentAutoTimer) clearTimeout(absentAutoTimer);
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         
         const payload = JSON.stringify({ type: "clear_absent" });
-        
         if (navigator.sendBeacon) {
             navigator.sendBeacon(GAS_URL, payload);
             location.reload();
             return;
         }
-
         try {
             await fetch(GAS_URL, {
                 method: "POST",
@@ -525,23 +568,23 @@
         getBestKoVoice();
     }
 
-    // 📡 [부재중 연동 버그 픽스] 대시보드 구조에 맞춰 실시간으로 수신받도록 보정된 비동기 루프
-    function checkAbsentSignalLoop() {
-        setInterval(async () => {
-            try {
-                const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
-                const d = await res.json();
-                
-                // 대시보드 상태가 부재중(type) 액션을 발생시켰을 때 즉시 감동의 이벤트 구동
-                if (d && d.type === "absent" && d.teacher) {
-                    triggerAbsentScreen(d.teacher);
-                }
-            } catch(e) { console.log("부재중 시그널 대기 중..."); }
-        }, 600);
+    // 📡 [부재중 연동 감지 완벽 픽스 엔진] 재귀형 안정 구동 폴링 레이어
+    async function checkAbsentSignalLoop() {
+        try {
+            const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
+            const d = await res.json();
+            
+            // 🚨 백엔드 구조 유연화 매핑: type 필드가 absent이거나, purpose 목적이 '부재중'인 조건 모두 잡음
+            if (d && (d.type === "absent" || d.purpose === "부재중" || d.type === "ABSENT_ALERT") && d.teacher) {
+                triggerAbsentScreen(d.teacher);
+                return; // 팝업창 실행 시 루프 잠시 정지
+            }
+        } catch(e) { console.log("부재중 동기화 대기 중..."); }
+        
+        setTimeout(checkAbsentSignalLoop, 500); // 0.5초 주기로 재귀 안전 호출
     }
 
     function triggerAbsentScreen(teacherName) {
-        clearTimeout(absentAutoTimer);
         const overlay = document.getElementById('absentOverlay');
         document.getElementById('absentMsg').innerHTML = `<span style="font-size:2.8rem; font-weight:900; background:rgba(0,0,0,0.2); padding:4px 15px; border-radius:12px;">${teacherName}</span> 선생님은<br>현재 부재중이십니다.`;
         overlay.style.display = "flex";
@@ -571,18 +614,15 @@
                 uttr.rate = 1.05;
                 
                 uttr.onend = function() {
-                    absentAutoTimer = setTimeout(() => {
-                        cleanReset();
-                    }, 500); 
+                    setTimeout(() => { cleanReset(); }, 500); 
                 };
-                
                 window.speechSynthesis.speak(uttr);
             }
         }, 400);
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-        checkAbsentSignalLoop();
+        checkAbsentSignalLoop(); // 루프 시작 실행
     });
 
     holdBtn.addEventListener('mousedown', startPress);
