@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy.css" type="text/css"/>
     <style>
         * { font-family: 'Paperlogy', sans-serif !important; margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #f8fafc; padding: 40px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body { background: #f8fafc; padding: 40px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
         #startLayer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .start-btn { background: #2563eb; color: white; padding: 25px 60px; border-radius: 20px; font-size: 2rem; border: none; cursor: pointer; font-weight: bold; box-shadow: 0 10px 30px rgba(37,99,235,0.3); }
         .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
@@ -23,6 +23,32 @@
         .absent-btn:hover { background: #b91c1c; }
 
         .history-item { background: white; padding: 15px; border-radius: 15px; margin-top: 10px; display: flex; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-size: 1.2rem; font-weight: bold; color: #334155; border-left: 5px solid #cbd5e0; }
+
+        /* ✨ 토스 스타일 토스트 알림 레이아웃 */
+        .toast-container {
+            position: fixed;
+            bottom: 40px;
+            left: 51%;
+            transform: translateX(-50%) translateY(40px);
+            background: rgba(15, 23, 42, 0.9);
+            color: white;
+            padding: 18px 36px;
+            border-radius: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            z-index: 2000;
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .toast-container.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
     </style>
 </head>
 <body>
@@ -46,10 +72,14 @@
 
 <div id="historyList" style="margin-top:20px;"></div>
 
+<div id="toast" class="toast-container">
+    <span style="color: #ef4444;">🚨</span> <span id="toastMessage">부재중 신호가 전송되었습니다.</span>
+</div>
+
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyRYkCLlFar3Hva39-jCScAoG60otEDNT3x_2JGbokon4Y_FrE6vbw0jcsaRe5KqJPzqw/exec";
     let lastTime = Date.now(), historyList = [];
-    let koVoice = null, autoCloseTimer = null;
+    let koVoice = null, autoCloseTimer = null, toastTimer = null;
 
     function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }
     setInterval(updateClock, 1000);
@@ -77,7 +107,6 @@
         try {
             const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
             const d = await res.json();
-            // 부재중 알림 데이터 구조가 아닐 때만 타임스탬프 셋
             if(d && d.timestamp && d.type !== "ABSENT_ALERT") lastTime = Number(d.timestamp);
         } catch(e) { lastTime = Date.now(); }
         
@@ -89,7 +118,6 @@
             const res = await fetch(`${GAS_URL}?type=latest&v=${Date.now()}`);
             const d = await res.json();
             
-            // 🔒 [보안 필터] 들어온 최신 데이터가 부재중 신호(ABSENT_ALERT)라면 대시보드 리드 룹에서 무조건 패스
             if (d && d.type === "ABSENT_ALERT") {
                 setTimeout(checkCallDynamic, 400);
                 return;
@@ -103,8 +131,20 @@
         setTimeout(checkCallDynamic, 400); 
     }
 
+    /* ✨ 토스 스타일 토스트 작동 함수 */
+    function showToast(message) {
+        clearTimeout(toastTimer);
+        const toast = document.getElementById('toast');
+        document.getElementById('toastMessage').innerText = message;
+        
+        toast.classList.add('show');
+        
+        toastTimer = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2500); // 2.5초간 노출 후 부드럽게 사라짐
+    }
+
     function notify(d) {
-        // 유효하지 않은 호출이거나 데이터 누락 시 조용히 넘김
         if(!d || !d.name || !d.teacher) return;
 
         clearTimeout(autoCloseTimer);
@@ -118,20 +158,17 @@
         
         card.style.display = "flex"; 
 
-        // 🔊 [우렁차고 명확한 '딩-동-' 차임벨 재생 엔진 적용]
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (AudioContext) {
                 const ctx = new AudioContext();
                 const now = ctx.currentTime;
 
-                // 1. 첫 번째 고음 톤: '딩' (주파수 880Hz)
                 const osc1 = ctx.createOscillator();
                 const gain1 = ctx.createGain();
                 osc1.type = 'square';
                 osc1.frequency.setValueAtTime(1200, now);
                 
-                // 볼륨 감쇠 계수를 크게 보정하여 시끄러운 교무실에서도 선명히 들리도록 튜닝
                 gain1.gain.setValueAtTime(0, now);
                 gain1.gain.linearRampToValueAtTime(1.4, now + 0.02);
                 gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
@@ -139,7 +176,6 @@
                 osc1.connect(gain1); gain1.connect(ctx.destination);
                 osc1.start(now); osc1.stop(now + 0.6);
 
-                // 2. 두 번째 하향 톤: '동' (주파수 554.37Hz, 0.22초 뒤 발생)
                 const osc2 = ctx.createOscillator();
                 const gain2 = ctx.createGain();
                 osc2.type = 'square';
@@ -154,7 +190,6 @@
             }
         } catch (e) { console.log(e); }
 
-        // 🗣️ 알림음이 끝난 후 깨끗하게 이어지는 TTS 안내 방송
         setTimeout(() => {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel(); 
@@ -171,19 +206,22 @@
         if(historyList.length > 3) historyList.pop();
         document.getElementById('historyList').innerHTML = historyList.map(h => `<div class="history-item"><span>${h.id} ${h.name}</span><span>${h.purpose}</span></div>`).join('');
 
+        // 부재중 버튼 핸들러 수정
         document.getElementById('absentBtn').onclick = () => {
             clearTimeout(autoCloseTimer);
             sendAbsentSignal(d.teacher);
+            showToast(`${d.teacher} 선생님 부재중 신호를 전송했습니다.`); // 토스트 알림 실행
             closeCard();
         };
 
+        // ⏱️ 자동 종료 타이머를 10초에서 30초(30000ms)로 연장
         autoCloseTimer = setTimeout(() => { 
             closeCard();
             fetch(GAS_URL, {
                 method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({ type: "complete", id: d.id })
             }).catch(err => console.log(err));
-        }, 10000);
+        }, 30000); 
     }
 
     function closeCard() {
