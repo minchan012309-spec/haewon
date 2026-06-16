@@ -24,30 +24,31 @@
 
         .history-item { background: white; padding: 15px; border-radius: 15px; margin-top: 10px; display: flex; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-size: 1.2rem; font-weight: bold; color: #334155; border-left: 5px solid #cbd5e0; }
 
-        /* ✨ 토스 스타일 토스트 알림 레이아웃 */
+        /* ✨ 화면 중앙에 더 크고 선명하게 뜨는 토스 스타일 토스트 */
         .toast-container {
             position: fixed;
-            bottom: 40px;
-            left: 51%;
-            transform: translateX(-50%) translateY(40px);
-            background: rgba(15, 23, 42, 0.9);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -30%) scale(0.9);
+            background: rgba(15, 23, 42, 0.95);
             color: white;
-            padding: 18px 36px;
-            border-radius: 20px;
-            font-size: 1.5rem;
+            padding: 30px 60px;       /* 내부 여백을 키워 크기 확대 */
+            border-radius: 28px;
+            font-size: 2.2rem;         /* 글자 크기를 더 크게 변경 */
             font-weight: bold;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
             z-index: 2000;
             opacity: 0;
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
             pointer-events: none;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 20px;
+            white-space: nowrap;
         }
         .toast-container.show {
             opacity: 1;
-            transform: translateX(-50%) translateY(0);
+            transform: translate(-50%, -50%) scale(1); /* 정중앙 배치 */
         }
     </style>
 </head>
@@ -131,7 +132,7 @@
         setTimeout(checkCallDynamic, 400); 
     }
 
-    /* ✨ 토스 스타일 토스트 작동 함수 */
+    /* ✨ 토스트 실행 함수 */
     function showToast(message) {
         clearTimeout(toastTimer);
         const toast = document.getElementById('toast');
@@ -141,7 +142,7 @@
         
         toastTimer = setTimeout(() => {
             toast.classList.remove('show');
-        }, 2500); // 2.5초간 노출 후 부드럽게 사라짐
+        }, 2500); // 2.5초 뒤 자동 종료
     }
 
     function notify(d) {
@@ -206,15 +207,15 @@
         if(historyList.length > 3) historyList.pop();
         document.getElementById('historyList').innerHTML = historyList.map(h => `<div class="history-item"><span>${h.id} ${h.name}</span><span>${h.purpose}</span></div>`).join('');
 
-        // 부재중 버튼 핸들러 수정
+        // 부재중 버튼 핸들러
         document.getElementById('absentBtn').onclick = () => {
             clearTimeout(autoCloseTimer);
             sendAbsentSignal(d.teacher);
-            showToast(`${d.teacher} 선생님 부재중 신호를 전송했습니다.`); // 토스트 알림 실행
+            showToast(`${d.teacher} 선생님 부재중 신호를 전송했습니다.`);
             closeCard();
         };
 
-        // ⏱️ 자동 종료 타이머를 10초에서 30초(30000ms)로 연장
+        // ⏱️ 기본 팝업 대기 시간: 30초 (30000ms)
         autoCloseTimer = setTimeout(() => { 
             closeCard();
             fetch(GAS_URL, {
