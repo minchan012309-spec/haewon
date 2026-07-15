@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>원 & 타원 삼각함수 기하학 통합 분석기</title>
+    <style>
+        /* [사용자 제공] 페이퍼로지(Paperozi) 웹 폰트 로드 */
+        @font-face {
+            font-family: 'Paperozi';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-1Thin.woff2') format('woff2');
+            font-weight: 100;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Paperozi';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-2ExtraLight.woff2') format('woff2');
+            font-weight: 200;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Paperozi';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-3Light.woff2') format('woff2');
+            font-weight: 300;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Paperozi';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2') format('woff2');
+            font-weight: 400;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Paperozi';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-5Medium.woff2') format('woff2');
+            font-weight: 500;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Paperozi';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2') format('woff2');
+            font-weight: 600;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Paperozi';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2') format('woff2');
+            font-weight: 700;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Paperozi';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2') format('woff2');
+            font-weight: 800;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Paperozi';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-9Black.woff2') format('woff2');
+            font-weight: 900;
+            font-display: swap;
+        }
+
+        body { 
+            font-family: 'Paperozi', 'Malgun Gothic', sans-serif; 
+            font-weight: 400;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background-color: #f8f9fa; 
+            margin: 20px; 
+            color: #333; 
+        }
+
+        h1 { 
+            font-family: 'Paperozi', sans-serif;
+            font-weight: 700; /* Bold */
+            margin-bottom: 5px; 
+            font-size: 1.8rem; 
+            color: #2c3e50; 
+        }
+        
+        p { 
+            margin-top: 0; 
+            margin-bottom: 25px;
+            color: #7f8c8d; 
+            font-size: 0.95rem; 
+            text-align: center; 
+            max-width: 800px; 
+            line-height: 1.6;
+        }
+
+        /* 탭 스타일 */
+        .tab-wrapper {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            max-width: 950px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #dfe6e9;
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.05rem;
+            cursor: pointer;
+            color: #7f8c8d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            font-family: 'Paperozi', sans-serif;
+            font-weight: 600; /* SemiBold */
+        }
+
+        .tab-button:hover {
+            color: #2c3e50;
+        }
+
+        .tab-button.active {
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+            font-weight: 800; /* ExtraBold */
+        }
+
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .tab-content.active-content {
+            display: flex;
+        }
+
+        /* 공통 그래픽 레이아웃 */
+        canvas { 
+            background-color: white; 
+            border: 1px solid #dfe6e9; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+            margin-bottom: 15px; 
+        }
+
+        .controls { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+        }
+
+        /* 각 시뮬레이터 제어판 개별 너비 설정 */
+        #tab1 .controls { width: 910px; }
+        #tab2 .controls { width: 860px; }
+
+        .row { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+        .btn-group { display: flex; gap: 10px; }
+
+        /* 공통 버튼 */
+        .ctrl-btn { 
+            padding: 8px 16px; 
+            border: 1px solid #ccc; 
+            background-color: #f1f2f6; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            font-family: 'Paperozi', sans-serif;
+            font-weight: 700; /* Bold */
+        }
+        .ctrl-btn.active { 
+            background-color: #3498db; 
+            color: white; 
+            border-color: #2980b9; 
+        }
+        .ctrl-btn:hover { background-color: #dfe4ea; }
+        .ctrl-btn.active:hover { background-color: #2980b9; }
+
+        /* 슬라이더 스타일 */
+        .slider-container { display: flex; gap: 20px; flex-grow: 1; justify-content: flex-end; }
+        .slider-group { display: flex; flex-direction: column; align-items: flex-start; min-width: 140px; }
+        .slider-group label { font-size: 0.85rem; margin-bottom: 4px; font-weight: 700; }
+        .slider-group input { width: 100%; cursor: pointer; }
+
+        /* 정보 가이드 패널 */
+        .info-panel { 
+            font-size: 0.9rem; 
+            background: #eef2f3; 
+            padding: 12px 18px; 
+            border-radius: 6px; 
+            line-height: 1.6; 
+            font-family: 'Paperozi', sans-serif;
+            font-weight: 400; /* Regular */
+        }
+        #tab1 .info-panel { border-left: 4px solid #e74c3c; }
+        #tab2 .info-panel { border-left: 4px solid #3498db; }
+
+        /* 범례 */
+        .legend { display: flex; gap: 15px; font-size: 0.85rem; font-weight: 700; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <h1>원 & 타원 삼각함수 기하학 통합 분석기</h1>
+    <p>고등학교 기하 영역의 작도법과 수학I 영역의 삼각함수 정의를 융합하여,<br>
+    기하학적 왜곡 현상과 수식의 실제 움직임을 직관적으로 실험하고 비교할 수 있습니다.</p>
+
+    <!-- 상단 탭 네비게이션 -->
+    <div class="tab-wrapper">
+        <button class="tab-button active" onclick="openTab(event, 'tab1')">1. 동심원 작도 및 그래프 왜곡 분석</button>
+        <button class="tab-button" onclick="openTab(event, 'tab2')">2. 원·타원 삼각함수 통합 시뮬레이터</button>
+    </div>
+
+    <!-- 탭 1: 작도 및 왜곡 분석 -->
+    <div id="tab1" class="tab-content active-content">
+        <canvas id="simCanvas1" width="950" height="480"></canvas>
+        <div class="controls">
+            <div class="row">
+                <div class="legend">
+                    <span style="align-self: center; color:#2c3e50;">수학적 요소:</span>
+                    <div class="legend-item"><span class="dot" style="background-color: #3498db;"></span> 큰 원 (반지름 a)</div>
+                    <div class="legend-item"><span class="dot" style="background-color: #2ecc71;"></span> 작은 원 (반지름 b)</div>
+                    <div class="legend-item"><span class="dot" style="background-color: #e67e22;"></span> 보조각 t (수식 각도)</div>
+                    <div class="legend-item"><span class="dot" style="background-color: #9b59b6;"></span> 실제각 θ (눈에 보이는 각도)</div>
+                </div>
+
+                <div class="slider-container" style="gap: 15px;">
+                    <div class="slider-group">
+                        <label for="a-slider1">가로 반지름 (a): <span id="a-val1">2.0</span></label>
+                        <input type="range" id="a-slider1" min="1.0" max="2.5" step="0.1" value="2.0">
+                    </div>
+                    <div class="slider-group">
+                        <label for="b-slider1">세로 반지름 (b): <span id="b-val1">1.0</span></label>
+                        <input type="range" id="b-slider1" min="0.5" max="2.0" step="0.1" value="1.0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <strong>[기하학적 왜곡 분석 가이드]</strong><br>
+                1. 왼쪽 기하창에서 <strong>주황색 선(보조각 t)</strong>과 <strong>보라색 선(실제 각도 θ)</strong>이 0도, 90도 같은 축 위를 제외하고는 완전히 어긋나는 것을 관찰하세요[cite: 1].<br>
+                2. 오른쪽 그래프에서 <span style="color:#3498db; font-weight:bold;">파란색 실선(시간 t 기준 사인파)</span>과 <span style="color:#e74c3c; font-weight:bold;">빨간색 점선(실제 눈에 보이는 각도 θ 기준)</span>을 비교하세요. 실제 각도로 작도하면 꼭대기 파형이 찌그러집니다[cite: 1]!
+            </div>
+        </div>
+    </div>
+
+    <!-- 탭 2: 삼각함수 통합 분석 -->
+    <div id="tab2" class="tab-content">
+        <canvas id="simCanvas2" width="900" height="450"></canvas>
+        <div class="controls">
+            <div class="row">
+                <!-- 도형 선택 -->
+                <div class="btn-group">
+                    <span style="align-self: center; font-weight: bold; margin-right: 10px;">도형:</span>
+                    <button id="btn-circle2" class="ctrl-btn active" onclick="setShape2('circle')">단위원 (Circle)</button>
+                    <button id="btn-ellipse2" class="ctrl-btn" onclick="setShape2('ellipse')">타원 (Ellipse)</button>
+                </div>
+                
+                <!-- 함수 선택 -->
+                <div class="btn-group">
+                    <span style="align-self: center; font-weight: bold; margin-right: 10px;">함수:</span>
+                    <button id="btn-sine2" class="ctrl-btn active" onclick="setFunc2('sine')">Sine (sin)</button>
+                    <button id="btn-cosine2" class="ctrl-btn" onclick="setFunc2('cosine')">Cosine (cos)</button>
+                    <button id="btn-tangent2" class="ctrl-btn" onclick="setFunc2('tangent')">Tangent (tan)</button>
+                </div>
+            </div>
+
+            <div class="row" style="border-top: 1px solid #eee; padding-top: 15px;">
+                <button class="ctrl-btn" onclick="resetT2()" style="background-color: #e74c3c; color: white; border: none;">시뮬레이션 초기화</button>
+
+                <div class="slider-container">
+                    <div id="circle-sliders2" class="slider-group">
+                        <label for="r-slider2">반지름 (R): <span id="r-val2">1.5</span></label>
+                        <input type="range" id="r-slider2" min="0.5" max="2.5" step="0.1" value="1.5">
+                    </div>
+                    <div id="ellipse-sliders2" class="slider-group" style="display: none; gap: 10px; flex-direction: row;">
+                        <div class="slider-group">
+                            <label for="a-slider2">X축 반지름 (a): <span id="a-val2">2.0</span></label>
+                            <input type="range" id="a-slider2" min="0.5" max="2.5" step="0.1" value="2.0">
+                        </div>
+                        <div class="slider-group">
+                            <label for="b-slider2">Y축 반지름 (b): <span id="b-val2">1.0</span></label>
+                            <input type="range" id="b-slider2" min="0.5" max="2.5" step="0.1" value="1.0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-panel" id="info-text2">
+                <strong>[단위원 - Sine]</strong> y = R * sin(t)를 시각화합니다. 동경의 끝점 Y좌표가 우측 그래프의 높이로 그대로 투영됩니다[cite: 2].
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 상태 관리
+        let activeTab = 'tab1';
+
+        function openTab(evt, tabId) {
+            const contents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < contents.length; i++) {
+                contents[i].classList.remove('active-content');
+            }
+            
+            const buttons = document.getElementsByClassName('tab-button');
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove('active');
+            }
+            
+            document.getElementById(tabId).classList.add('active-content');
+            evt.currentTarget.classList.add('active');
+            
+            activeTab = tabId;
+        }
+
+
+        // ==========================================
+        // 1번 시뮬레이터 (동심원 작도 및 왜곡 분석)
+        // ==========================================
+        const canvas1 = document.getElementById("simCanvas1");
+        const ctx1 = canvas1.getContext("2d");
+        
+        const aSlider1 = document.getElementById("a-slider1");
+        const bSlider1 = document.getElementById("b-slider1");
+        const aVal1 = document.getElementById("a-val1");
+        const bVal1 = document.getElementById("b-val1");
+
+        let t1 = 0;
+        const scale1 = 80;
+        const originX1 = 250;
+        const originY1 = 240;
+        const graphStartX1 = 540;
+        const graphWidth1 = 360;
+
+        function draw1() {
+            // 비활성화 탭일 경우 그리기 중단 (자원 절약)
+            if (activeTab !== 'tab1') {
+                requestAnimationFrame(draw1);
+                return;
+            }
+
+            ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+            
+            let a = parseFloat(aSlider1.value);
+            let b = parseFloat(bSlider1.value);
+            aVal1.innerText = a;
+            bVal1.innerText = b;
+
+            // 1) 축 그리기
+            ctx1.beginPath();
+            ctx1.strokeStyle = "#f1f2f6";
+            ctx1.lineWidth = 1;
+            ctx1.moveTo(30, originY1); ctx1.lineTo(originX1 + 220, originY1);
+            ctx1.moveTo(originX1, 30); ctx1.lineTo(originX1, canvas1.height - 30);
+            ctx1.moveTo(graphStartX1, originY1); ctx1.lineTo(graphStartX1 + graphWidth1 + 20, originY1);
+            ctx1.moveTo(graphStartX1, 30); ctx1.lineTo(graphStartX1, canvas1.height - 30);
+            ctx1.stroke();
+
+            // 2) 동심원 및 타원 그리기
+            ctx1.beginPath();
+            ctx1.strokeStyle = "rgba(52, 152, 219, 0.4)"; // 큰원
+            ctx1.lineWidth = 1.5;
+            ctx1.arc(originX1, originY1, a * scale1, 0, 2 * Math.PI);
+            ctx1.stroke();
+
+            ctx1.beginPath();
+            ctx1.strokeStyle = "rgba(46, 204, 113, 0.4)"; // 작은원
+            ctx1.arc(originX1, originY1, b * scale1, 0, 2 * Math.PI);
+            ctx1.stroke();
+
+            ctx1.beginPath();
+            ctx1.strokeStyle = "#7f8c8d"; // 타원
+            ctx1.lineWidth = 2;
+            ctx1.ellipse(originX1, originY1, a * scale1, b * scale1, 0, 0, 2 * Math.PI);
+            ctx1.stroke();
+
+            // 3) 기하 매핑 포인트 계산
+            let ax = originX1 + a * scale1 * Math.cos(t1);
+            let ay = originY1 - a * scale1 * Math.sin(t1);
+            let bx = originX1 + b * scale1 * Math.cos(t1);
+            let by = originY1 - b * scale1 * Math.sin(t1);
+            let px = ax;
+            let py = by;
+
+            // 작도 연동 점선 (버그 수정: ctx1 context로 정상 교체 완료)
+            ctx1.beginPath();
+            ctx1.strokeStyle = "#bdc3c7";
+            ctx1.setLineDash([4, 4]);
+            ctx1.moveTo(ax, ay); ctx1.lineTo(px, py);
+            ctx1.moveTo(bx, by); ctx1.lineTo(px, py);
+            ctx1.stroke();
+            ctx1.setLineDash([]);
+
+            // 주황 동경 (보조각 t)
+            ctx1.beginPath();
+            ctx1.strokeStyle = "#e67e22";
+            ctx1.lineWidth = 2;
+            ctx1.moveTo(originX1, originY1); ctx1.lineTo(ax, ay);
+            ctx1.stroke();
+
+            // 보라 동경 (실제각 θ)
+            ctx1.beginPath();
+            ctx1.strokeStyle = "#9b59b6";
+            ctx1.lineWidth = 2;
+            ctx1.moveTo(originX1, originY1); ctx1.lineTo(px, py);
+            ctx1.stroke();
+
+            // 정점 그리기
+            ctx1.beginPath(); ctx1.fillStyle = "#e67e22"; ctx1.arc(ax, ay, 4, 0, 2 * Math.PI); ctx1.fill();
+            ctx1.beginPath(); ctx1.fillStyle = "#2ecc71"; ctx1.arc(bx, by, 4, 0, 2 * Math.PI); ctx1.fill();
+            ctx1.beginPath(); ctx1.fillStyle = "#e74c3c"; ctx1.arc(px, py, 5, 0, 2 * Math.PI); ctx1.fill();
+
+            // 아크 그리기
+            let currentTheta = Math.atan2(b * Math.sin(t1), a * Math.cos(t1));
+            if (currentTheta < 0) currentTheta += 2 * Math.PI;
+
+            ctx1.beginPath();
+            ctx1.strokeStyle = "rgba(230, 126, 34, 0.6)";
+            ctx1.lineWidth = 3;
+            ctx1.arc(originX1, originY1, 40, 0, -t1, true);
+            ctx1.stroke();
+
+            ctx1.beginPath();
+            ctx1.strokeStyle = "rgba(155, 89, 182, 0.8)";
+            ctx1.lineWidth = 3;
+            ctx1.arc(originX1, originY1, 25, 0, -currentTheta, true);
+            ctx1.stroke();
+
+            // 4) 그래프 투영 드로잉
+            ctx1.fillStyle = "#7f8c8d";
+            ctx1.font = "11px Paperozi, sans-serif";
+            ctx1.fillText("0°", graphStartX1, originY1 + 15);
+            ctx1.fillText("180°", graphStartX1 + graphWidth1/2 - 15, originY1 + 15);
+            ctx1.fillText("360°", graphStartX1 + graphWidth1 - 10, originY1 + 15);
+
+            // 파란 선 (t1 기준 이론 사인파)
+            ctx1.beginPath();
+            ctx1.strokeStyle = "#3498db";
+            ctx1.lineWidth = 2.5;
+            for (let deg = 0; deg <= 360; deg++) {
+                let rad_t = (deg * Math.PI) / 180;
+                let graphY = originY1 - b * scale1 * Math.sin(rad_t);
+                let graphX = graphStartX1 + (deg / 360) * graphWidth1;
+                if (deg === 0) ctx1.moveTo(graphX, graphY);
+                else ctx1.lineTo(graphX, graphY);
+            }
+            ctx1.stroke();
+
+            // 빨간 점선 (θ 기준 왜곡 사인파)
+            ctx1.beginPath();
+            ctx1.strokeStyle = "#e74c3c";
+            ctx1.lineWidth = 2.5;
+            ctx1.setLineDash([3, 3]);
+            for (let deg = 0; deg <= 360; deg++) {
+                let rad_t = (deg * Math.PI) / 180;
+                let rad_theta = Math.atan2(b * Math.sin(rad_t), a * Math.cos(rad_t));
+                if (rad_theta < 0) rad_theta += 2 * Math.PI;
+
+                let graphY = originY1 - b * scale1 * Math.sin(rad_t);
+                let graphX = graphStartX1 + (rad_theta / (2 * Math.PI)) * graphWidth1;
+                
+                if (deg === 0) ctx1.moveTo(graphX, graphY);
+                else ctx1.lineTo(graphX, graphY);
+            }
+            ctx1.stroke();
+            ctx1.setLineDash([]);
+
+            // 실시간 위치 도트 그리기
+            let current_t_deg = ((t1 % (2 * Math.PI)) / (2 * Math.PI)) * 360;
+            let current_theta_deg = (currentTheta / (2 * Math.PI)) * 360;
+            let ptX = graphStartX1 + (current_t_deg / 360) * graphWidth1;
+            let pthetaX = graphStartX1 + (current_theta_deg / 360) * graphWidth1;
+
+            ctx1.beginPath();
+            ctx1.strokeStyle = "rgba(231, 76, 60, 0.3)";
+            ctx1.setLineDash([2, 2]);
+            ctx1.moveTo(px, py); ctx1.lineTo(Math.max(ptX, pthetaX), py);
+            ctx1.stroke();
+            ctx1.setLineDash([]);
+
+            ctx1.beginPath(); ctx1.fillStyle = "#3498db"; ctx1.arc(ptX, py, 5, 0, 2 * Math.PI); ctx1.fill();
+            ctx1.beginPath(); ctx1.fillStyle = "#e74c3c"; ctx1.arc(pthetaX, py, 5, 0, 2 * Math.PI); ctx1.fill();
+
+            t1 += 0.012;
+            if (t1 > 2 * Math.PI) t1 -= 2 * Math.PI;
+
+            requestAnimationFrame(draw1);
+        }
+
+
+        // ==========================================
+        // 2번 시뮬레이터 (원·타원 삼각함수 통합 분석)
+        // ==========================================
+        const canvas2 = document.getElementById("simCanvas2");
+        const ctx2 = canvas2.getContext("2d");
+        
+        const rSlider2 = document.getElementById("r-slider2");
+        const aSlider2 = document.getElementById("a-slider2");
+        const bSlider2 = document.getElementById("b-slider2");
+        const rVal2 = document.getElementById("r-val2");
+        const aVal2 = document.getElementById("a-val2");
+        const bVal2 = document.getElementById("b-val2");
+        const infoPanel2 = document.getElementById("info-text2");
+
+        let shape2 = 'circle';
+        let func2 = 'sine';
+        let t2 = 0;
+        const scale2 = 70;
+        const originX2 = 250;
+        const originY2 = 225;
+        const graphStartX2 = 500;
+
+        let graphData2 = [];
+
+        function setShape2(newShape) {
+            shape2 = newShape;
+            document.getElementById("btn-circle2").classList.toggle("active", shape2 === 'circle');
+            document.getElementById("btn-ellipse2").classList.toggle("active", shape2 === 'ellipse');
+            
+            if (shape2 === 'circle') {
+                document.getElementById("circle-sliders2").style.display = "block";
+                document.getElementById("ellipse-sliders2").style.display = "none";
+            } else {
+                document.getElementById("circle-sliders2").style.display = "none";
+                document.getElementById("ellipse-sliders2").style.display = "flex";
+            }
+            resetT2();
+            updateInfoText2();
+        }
+
+        function setFunc2(newFunc) {
+            func2 = newFunc;
+            document.getElementById("btn-sine2").classList.toggle("active", func2 === 'sine');
+            document.getElementById("btn-cosine2").classList.toggle("active", func2 === 'cosine');
+            document.getElementById("btn-tangent2").classList.toggle("active", func2 === 'tangent');
+            resetT2();
+            updateInfoText2();
+        }
+
+        function resetT2() {
+            t2 = 0;
+            graphData2 = [];
+        }
+
+        function updateInfoText2() {
+            let text = "";
+            if (shape2 === 'circle') {
+                if (func2 === 'sine') text = "<strong>[단위원 - Sine]</strong> y = R * sin(t)를 시각화합니다. 높이(Y값) 변화가 우측의 사인파를 만듭니다[cite: 2].";
+                else if (func2 === 'cosine') text = "<strong>[단위원 - Cosine]</strong> x = R * cos(t)를 시각화합니다. 밑변(X값)의 크기를 세로축으로 회전 투영하여 코사인파를 유도합니다[cite: 2].";
+                else text = "<strong>[단위원 - Tangent]</strong> 접선 x = R과 동경의 연장선이 만나는 교점의 Y좌표(R * tan(t))를 추적합니다. 점근선 부근에서 무한대로 발산합니다[cite: 2].";
+            } else {
+                if (func2 === 'sine') text = "<strong>[타원 - Sine]</strong> 타원의 매개변수 방정식 y = b * sin(t)를 시각화합니다. Y축 반지름 b에 의해 진폭이 결정됩니다[cite: 2].";
+                else if (func2 === 'cosine') text = "<strong>[타원 - Cosine]</strong> x = a * cos(t)를 시각화합니다. X축 반지름 a에 의해 진폭이 결정되며 코사인 개형을 이룹니다[cite: 2].";
+                else text = "<strong>[타원 - Tangent]</strong> 타원 접선 x = a와 동경 연장선의 교점을 구하여 y = b * tan(t)의 궤적을 얻습니다. 원에 비해 b/a 비율만큼 증폭됩니다[cite: 2].";
+            }
+            infoPanel2.innerHTML = text;
+        }
+
+        function draw2() {
+            if (activeTab !== 'tab2') {
+                requestAnimationFrame(draw2);
+                return;
+            }
+
+            ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+            
+            let a, b;
+            if (shape2 === 'circle') {
+                let r = parseFloat(rSlider2.value);
+                rVal2.innerText = r;
+                a = r; b = r;
+            } else {
+                a = parseFloat(aSlider2.value);
+                b = parseFloat(bSlider2.value);
+                aVal2.innerText = a;
+                bVal2.innerText = b;
+            }
+
+            // 가이드라인 그리기
+            ctx2.beginPath();
+            ctx2.strokeStyle = "#e2e8f0";
+            ctx2.lineWidth = 1;
+            ctx2.moveTo(50, originY2); ctx2.lineTo(originX2 + 200, originY2);
+            ctx2.moveTo(originX2, 50); ctx2.lineTo(originX2, canvas2.height - 50);
+            ctx2.moveTo(graphStartX2, originY2); ctx2.lineTo(canvas2.width - 20, originY2);
+            ctx2.moveTo(graphStartX2, 50); ctx2.lineTo(graphStartX2, canvas2.height - 50);
+            ctx2.stroke();
+
+            // 타원 그리기
+            ctx2.beginPath();
+            ctx2.strokeStyle = "#7f8c8d";
+            ctx2.lineWidth = 2;
+            ctx2.ellipse(originX2, originY2, a * scale2, b * scale2, 0, 0, 2 * Math.PI);
+            ctx2.stroke();
+
+            // 동경 계산
+            let px = originX2 + a * scale2 * Math.cos(t2);
+            let py = originY2 - b * scale2 * Math.sin(t2);
+
+            ctx2.beginPath();
+            ctx2.strokeStyle = "#34495e";
+            ctx2.lineWidth = 1.5;
+            ctx2.moveTo(originX2, originY2); ctx2.lineTo(px, py);
+            ctx2.stroke();
+
+            let targetY = 0;
+            let helperColor = "#e74c3c";
+
+            if (func2 === 'sine') {
+                targetY = py;
+                helperColor = "#e74c3c";
+
+                ctx2.beginPath();
+                ctx2.strokeStyle = helperColor;
+                ctx2.setLineDash([3, 3]);
+                ctx2.moveTo(px, py); ctx2.lineTo(originX2, py);
+                ctx2.stroke();
+                ctx2.setLineDash([]);
+
+                ctx2.beginPath();
+                ctx2.strokeStyle = helperColor;
+                ctx2.lineWidth = 3;
+                ctx2.moveTo(originX2, originY2); ctx2.lineTo(originX2, py);
+                ctx2.stroke();
+                ctx2.lineWidth = 1;
+
+            } else if (func2 === 'cosine') {
+                let cosLength = a * scale2 * Math.cos(t2);
+                targetY = originY2 - cosLength;
+                helperColor = "#2ecc71";
+
+                ctx2.beginPath();
+                ctx2.strokeStyle = helperColor;
+                ctx2.setLineDash([3, 3]);
+                ctx2.moveTo(px, py); ctx2.lineTo(px, originY2);
+                ctx2.stroke();
+                ctx2.setLineDash([]);
+
+                ctx2.beginPath();
+                ctx2.strokeStyle = helperColor;
+                ctx2.lineWidth = 3;
+                ctx2.moveTo(originX2, originY2); ctx2.lineTo(px, originY2);
+                ctx2.stroke();
+                ctx2.lineWidth = 1;
+
+                ctx2.beginPath();
+                ctx2.strokeStyle = "rgba(46, 204, 113, 0.4)";
+                ctx2.setLineDash([2, 2]);
+                ctx2.moveTo(px, originY2); ctx2.lineTo(originX2 + cosLength, originY2 - cosLength);
+                ctx2.stroke();
+                ctx2.setLineDash([]);
+
+            } else if (func2 === 'tangent') {
+                helperColor = "#9b59b6";
+                let tangentX = originX2 + a * scale2;
+                let tanValue = Math.tan(t2);
+                let tangentY = originY2 - b * scale2 * tanValue;
+                targetY = tangentY;
+
+                ctx2.beginPath();
+                ctx2.strokeStyle = "#bdc3c7";
+                ctx2.setLineDash([2, 2]);
+                ctx2.moveTo(tangentX, 50); ctx2.lineTo(tangentX, canvas2.height - 50);
+                ctx2.stroke();
+                ctx2.setLineDash([]);
+
+                if (Math.abs(tanValue) < 4) {
+                    ctx2.beginPath();
+                    ctx2.strokeStyle = "rgba(52, 73, 94, 0.5)";
+                    ctx2.moveTo(originX2, originY2); ctx2.lineTo(tangentX, tangentY);
+                    ctx2.stroke();
+
+                    ctx2.beginPath();
+                    ctx2.fillStyle = helperColor;
+                    ctx2.arc(tangentX, tangentY, 4, 0, 2 * Math.PI);
+                    ctx2.fill();
+
+                    ctx2.beginPath();
+                    ctx2.strokeStyle = helperColor;
+                    ctx2.lineWidth = 3;
+                    ctx2.moveTo(tangentX, originY2); ctx2.lineTo(tangentX, tangentY);
+                    ctx2.stroke();
+                    ctx2.lineWidth = 1;
+                }
+            }
+
+            ctx2.beginPath();
+            ctx2.fillStyle = "#2c3e50";
+            ctx2.arc(px, py, 5, 0, 2 * Math.PI);
+            ctx2.fill();
+
+            graphData2.push(targetY);
+            if (graphData2.length > 380) {
+                graphData2.shift();
+            }
+
+            if (Math.abs(targetY - originY2) < 200) {
+                ctx2.beginPath();
+                ctx2.strokeStyle = helperColor;
+                ctx2.setLineDash([4, 4]);
+                let startProjX = px;
+                if (func2 === 'cosine') startProjX = px;
+                else if (func2 === 'tangent') startProjX = originX2 + a * scale2;
+                
+                ctx2.moveTo(startProjX, targetY);
+                ctx2.lineTo(graphStartX2 + graphData2.length, targetY);
+                ctx2.stroke();
+                ctx2.setLineDash([]);
+            }
+
+            ctx2.beginPath();
+            ctx2.strokeStyle = helperColor;
+            ctx2.lineWidth = 2.5;
+            for (let i = 0; i < graphData2.length; i++) {
+                if (func2 === 'tangent' && Math.abs(graphData2[i] - originY2) > 180) {
+                    ctx2.stroke();
+                    ctx2.beginPath();
+                    continue;
+                }
+                if (i === 0) ctx2.moveTo(graphStartX2 + i, graphData2[i]);
+                else ctx2.lineTo(graphStartX2 + i, graphData2[i]);
+            }
+            ctx2.stroke();
+            ctx2.lineWidth = 1;
+
+            t2 += 0.015;
+
+            requestAnimationFrame(draw2);
+        }
+
+        // 초기 시작
+        draw1();
+        draw2();
+    </script>
+</body>
+</html>
